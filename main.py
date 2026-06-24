@@ -47,10 +47,11 @@ def get_weather():
             hours_printed += 1
             if hours_printed == 24: break
 if __name__ == "__main__":
+    get_weather()
     print("-" * 70)
-    print("Нужно ли напечатать прогноз?(Используется стандартный принтер)\n0 - нет; 1 - да")
-    way = int(input("Input way: "))
-    if way == 1:
+    print("Нужно ли напечатать прогноз?(Используется стандартный принтер)\nENTER - нет; 1 - да")
+    way = input("Input way: ")
+    if way == "1":
         filename = "weather_report.txt"
         original_stdout = sys.stdout
         current_os = platform.system()
@@ -68,4 +69,4 @@ if __name__ == "__main__":
                 print("Документ успешно отправлен в очередь печати UNIX!")
             else: print(f"Ошибка: Операционная система {current_os} не поддерживается для печати.")
         except Exception as e: print(f"Не удалось отправить на печать: {e}")
-    else: get_weather()
+    elif way.upper() == "EOF": sys.exit(0)
