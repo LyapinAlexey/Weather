@@ -1,4 +1,3 @@
-# --- If you in Russia, turn ON VPN ---
 from datetime import datetime
 import requests
 import sys
@@ -44,7 +43,6 @@ def get_weather(for_printing):
     except (IndexError, KeyError): current_rain = None
     print(f" Город: {location['name']} ({location['country']})")
     print(f" Текущая температура: {current_temp}°C")
-    print(f" Состояние: {current_condition}")
     print(f" Текущий УФ-индекс: {current_uv}")
     print(f" Текущее давление: {current_pha} мм рт. ст.")
     print(f" Вероятность осадков: {current_rain}%")
@@ -52,7 +50,7 @@ def get_weather(for_printing):
     if for_printing: print("-" * 81)
     else: print("-" * 70)
     print(" Прогноз на 24 часа:")
-    print(f"{' Время':<7} | {'Температура':<8} | {'Вероятность осадков':<8} | {'УФ-индекс':<10} | {'Давление':<12}")
+    print(f"{' Время':<7} | {'Температура':<8} | {'Вероятность осадков':<8} | {'УФ-индекс':<9} | {'Давление':<12}")
     if for_printing: print("-" * 81)
     else: print("-" * 70)
     all_hours = []
@@ -74,7 +72,6 @@ def get_weather(for_printing):
         print("-" * 81)
         print(" Прогноз на неделю:")
         print(f"{' Дата':<11} | {'Сред. темп.':<11} | {'Осадки':<9} | {'Макс.УФ':<7} | {'Скорость ветра':<14} | {'Порыв ветра':<12}")
-        print("-" * 81)
         for day in data["forecast"]["forecastday"]:
             date_obj = datetime.strptime(day["date"], "%Y-%m-%d")
             parsed_date = date_obj.strftime("%d.%m.%Y")
