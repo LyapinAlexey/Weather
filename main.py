@@ -1,3 +1,4 @@
+# --- If you in Russia, turn ON VPN ---
 from datetime import datetime
 import requests
 def get_weather():
