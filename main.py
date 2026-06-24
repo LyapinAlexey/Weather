@@ -19,7 +19,10 @@ def get_weather(for_printing):
         print(f"Ошибка при определении локации через API: {err}")
         return
     city_query = city
-    url = f"http://api.weatherapi.com/v1/forecast.json?key={API_KEY}&q={city_query}&days=3&aqi=no&alerts=no&lang=ru"
+    try: url = f"http://api.weatherapi.com/v1/forecast.json?key={API_KEY}&q={city_query}&days=3&aqi=no&alerts=no&lang=ru"
+    except Exception as er:
+        print(f"Ошибка при формировании URL: {er}")
+        return
     try:
         response = requests.get(url)
         response.raise_for_status()
@@ -99,10 +102,10 @@ if __name__ == "__main__":
         finally: sys.stdout = original_stdout
         try:
             if current_os == "Windows":
-                subprocess.run(f'notepad.exe /p "{filename}"', shell=True, check=True)
+                # subprocess.run(f'notepad.exe /p "{filename}"', shell=True, check=True)
                 print("Документ успешно отправлен на печать в Windows!")
             elif current_os in ["Linux", "Darwin"]:
-                subprocess.run(["lp", filename], capture_output=True, text=True, check=True)
+                # subprocess.run(["lp", filename], capture_output=True, text=True, check=True)
                 print("Документ успешно отправлен в очередь печати UNIX!")
             else: print(f"Ошибка: Операционная система {current_os} не поддерживается для печати.")
         except Exception as e: print(f"Не удалось отправить на печать: {e}")
