@@ -2,7 +2,6 @@ from datetime import datetime
 import requests
 import sys
 import platform
-import subprocess
 for_printing = False
 API_KEY = "0f9495745ad44d309e5155406262406" 
 def get_weather(for_printing):
