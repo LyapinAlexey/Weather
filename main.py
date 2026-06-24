@@ -85,7 +85,7 @@ def get_weather(for_printing):
     else: print("-" * 70)
 if __name__ == "__main__":
     print("Нужно ли напечатать прогноз?(Используется стандартный принтер)")
-    way = input("0 - нет; 1 - да: ")
+    way = input("0 - Нет; 1 - Да: ")
     print("-" * 70)
     if way == "1":
         for_printing = True
