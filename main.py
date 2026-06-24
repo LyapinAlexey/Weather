@@ -3,7 +3,6 @@ import requests
 import sys
 import platform
 import subprocess
-import geocoder
 for_printing = False
 API_KEY = "0f9495745ad44d309e5155406262406" 
 def get_weather(for_printing):
@@ -20,7 +19,7 @@ def get_weather(for_printing):
         print(f"Ошибка при определении локации через API: {err}")
         return
     city_query = city
-    url = f"http://api.weatherapi.com/v1/forecast.json?key={API_KEY}&q={city_query}&days=7&aqi=no&alerts=no&lang=ru"
+    url = f"http://api.weatherapi.com/v1/forecast.json?key={API_KEY}&q={city_query}&days=3&aqi=no&alerts=no&lang=ru"
     try:
         response = requests.get(url)
         response.raise_for_status()
