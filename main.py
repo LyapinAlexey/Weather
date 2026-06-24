@@ -3,6 +3,13 @@ import requests
 import sys
 import platform
 import subprocess
+RESET = "\033[0m"
+GREEN = "\033[32m"
+YELLOW = "\033[33m"
+ORANGE = "\033[35m"
+RED = "\033[31m"
+BLUE = "\033[34m"
+CYAN = "\033[36m"
 for_printing = False
 API_KEY = "0f9495745ad44d309e5155406262406" 
 def get_weather(for_printing):
@@ -44,19 +51,41 @@ def get_weather(for_printing):
     current_condition = data["current"]["condition"]["text"]
     aqi_data = data["current"].get("air_quality", {})
     epa_index = aqi_data.get("us-epa-index", 0)
-    aqi_status = "Нет данных"
-    if epa_index == 1: aqi_status = "Отличное (Чистый воздух)"
-    elif epa_index == 2: aqi_status = "Умеренное (Норма)"
-    elif epa_index == 3: aqi_status = "Низкое (Вредно для уязвимых групп)"
-    elif epa_index == 4: aqi_status = "Вредное (Негативное влияние)"
-    elif epa_index == 5: aqi_status = "Очень вредное (Опасно для здоровья)"
-    elif epa_index == 6: aqi_status = "Опасное (Чрезвычайная ситуация)"
+    aqi_status = ("Нет данных", RESET)
+    uv_status = ("Нет данных", RESET)
+    temp_status = ("Нет данных", RESET)
+    if epa_index == 1: aqi_status = ("Отличное (Чистый воздух)", GREEN)
+    elif epa_index == 2: aqi_status = ("Умеренное (Норма)", YELLOW)
+    elif epa_index == 3: aqi_status = ("Низкое (Вредно для уязвимых групп)", ORANGE)
+    elif epa_index == 4: aqi_status = ("Вредное (Негативное влияние)", ORANGE)
+    elif epa_index == 5: aqi_status = ("Очень вредное (Опасно для здоровья)", RED)
+    elif epa_index == 6: aqi_status = ("Опасное (Чрезвычайная ситуация)", RED)
+    aqi_text, aqi_color = aqi_status
+    if 0 <= current_uv <= 2: uv_status = (str(current_uv), GREEN)
+    elif 3 <= current_uv <= 5: uv_status = (str(current_uv), YELLOW)
+    elif 6 <= current_uv <= 7: uv_status = (str(current_uv), ORANGE)
+    elif current_uv >= 8: uv_status = (str(current_uv), RED)
+    uv_text, uv_color = uv_status
+    if current_temp < -10.0: temp_status = (f"{current_temp}°C", BLUE)
+    elif -10.0 <= current_temp < 0.0: temp_status = (f"{current_temp}°C", CYAN)
+    elif 0.0 <= current_temp < 16.0: temp_status = (f"{current_temp}°C", GREEN)
+    elif 16.0 <= current_temp < 26.0: temp_status = (f"{current_temp}°C", YELLOW)
+    elif current_temp >= 26.0: temp_status = (f"{current_temp}°C", RED)
+    temp_text, temp_color = temp_status
+    if for_printing:
+        aqi_display = aqi_text
+        uv_display = uv_text
+        temp_display = temp_text
+    else:
+        aqi_display = f"{aqi_color}{aqi_text}{RESET}"
+        uv_display = f"{uv_color}{uv_text}{RESET}"
+        temp_display = f"{temp_color}{temp_text}{RESET}"
     try: current_rain = forecast_day[0]["hour"][current_hour_int]["chance_of_rain"]
     except (IndexError, KeyError): current_rain = None
     print(f" Город: {location['name']} ({location['country']})")
-    print(f" Текущая температура: {current_temp}°C")
-    print(f" Качество воздуха: {aqi_status}")
-    print(f" Текущий УФ-индекс: {current_uv}")
+    print(f" Текущая температура: {temp_display}")
+    print(f" Качество воздуха: {aqi_display}")
+    print(f" Текущий УФ-индекс: {uv_display}")
     print(f" Текущее давление: {current_pha} мм рт. ст.")
     print(f" Вероятность осадков: {current_rain}%")
     print(f" Погода: {current_condition}")
