@@ -1,7 +1,6 @@
 # --- If you in Russia, turn ON VPN ---
 from datetime import datetime
 import requests
-import os
 import sys
 import platform
 import subprocess
