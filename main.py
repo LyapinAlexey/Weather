@@ -23,7 +23,7 @@ def get_weather(for_printing):
         return
     now = datetime.now()
     print(f"Дата и время: {now.strftime('%d.%m.%Y %H:%M:%S')}")
-    if for_printing: print("-" * 92)
+    if for_printing: print("-" * 81)
     else: print("-" * 70)
     current_temp = data["current"]["temperature_2m"]
     current_uv = round(data["current"]["uv_index"])
@@ -34,11 +34,11 @@ def get_weather(for_printing):
     print(f"Текущий УФ-индекс: {current_uv}")
     print(f"Текущее давление: {current_pha}мм")
     print(f"Вероятность осадков: {current_rain}%")
-    if for_printing: print("-" * 92)
+    if for_printing: print("-" * 81)
     else: print("-" * 70)
     print("Прогноз на 24 часа:")
     print(f"{'Время':<8} | {'Температура':<8} | {'Вероятность осадков':<8} | {'УФ-индекс':<10} | {'Давление':<12}")
-    if for_printing: print("-" * 92)
+    if for_printing: print("-" * 81)
     else: print("-" * 70)
     hourly = data["hourly"]
     current_hour_str = now.strftime("%Y-%m-%dT%H:00")
@@ -54,10 +54,10 @@ def get_weather(for_printing):
             hours_printed += 1
             if hours_printed == 24: break
     if for_printing:
-        print("-" * 92)
+        print("-" * 81)
         print("Прогноз на неделю:")
-        print(f"{'Дата':<10} | {'Сред. темп.':<12} | {'Объем осадков':<15} | {'Макс. УФ':<8} | {'Скорость ветра':<15} | {'Порывы ветра':<14}")
-        print("-" * 92)
+        print(f"{'Дата':<10} | {'Сред. темп.':<12} | {'Осадки':<10} | {'Макс. УФ':<8} | {'Скорость ветра':<15} | {'Порыв ветра':<14}")
+        print("-" * 81)
         daily = data["daily"]
         for i, date_str in enumerate(daily["time"]):
             parsed_date = datetime.strptime(date_str, "%Y-%m-%d").strftime("%d.%m.%Y")
@@ -66,8 +66,9 @@ def get_weather(for_printing):
             uv_max = round(daily["uv_index_max"][i])
             wind_max = daily["wind_speed_10m_max"][i]
             gusts_max = daily["wind_gusts_10m_max"][i]
-            print(f"{parsed_date:<10} | {f'{t_mean}°C':<12} | {f'{rain_sum} мм':<15} | {f'{uv_max}':<8} | {f'{wind_max} км/ч':<15} | {f'{gusts_max} км/ч':<14}")
-    print("-" * 92)
+            print(f"{parsed_date:<10} | {f'{t_mean}°C':<12} | {f'{rain_sum} мм':<10} | {f'{uv_max}':<8} | {f'{wind_max} км/ч':<15} | {f'{gusts_max} км/ч':<9}")
+    if for_printing: print("-" * 81) 
+    else: print("-" * 70)
 if __name__ == "__main__":
     print("Нужно ли напечатать прогноз?(Используется стандартный принтер)")
     way = input("0 - нет; 1 - да: ")
