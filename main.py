@@ -1,6 +1,10 @@
 # --- If you in Russia, turn ON VPN ---
 from datetime import datetime
 import requests
+import os
+import sys
+import platform
+import subprocess
 def get_weather():
     city = "Москва"
     lat = 55.675093
@@ -43,4 +47,25 @@ def get_weather():
             hours_printed += 1
             if hours_printed == 24: break
 if __name__ == "__main__":
-    get_weather()
+    print("-" * 70)
+    print("Нужно ли напечатать прогноз?(Используется стандартный принтер)\n0 - нет; 1 - да")
+    way = int(input("Input way: "))
+    if way == 1:
+        filename = "weather_report.txt"
+        original_stdout = sys.stdout
+        current_os = platform.system()
+        file_encoding = "utf-16" if current_os == "Windows" else "utf-8"
+        with open(filename, "w", encoding=file_encoding) as f:
+            sys.stdout = f
+            get_weather()
+        sys.stdout = original_stdout
+        try:
+            if current_os == "Windows":
+                subprocess.run(f'notepad.exe /p "{filename}"', shell=True, check=True)
+                print("Документ успешно отправлен на печать в Windows!")
+            elif current_os in ["Linux", "Darwin"]:
+                subprocess.run(["lp", filename], capture_output=True, text=True, check=True)
+                print("Документ успешно отправлен в очередь печати UNIX!")
+            else: print(f"Ошибка: Операционная система {current_os} не поддерживается для печати.")
+        except Exception as e: print(f"Не удалось отправить на печать: {e}")
+    else: get_weather()
