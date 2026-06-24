@@ -37,6 +37,6 @@ def get_weather():
             rain_prob = hourly["precipitation_probability"][i]
             hpa = round((hourly["pressure_msl"][i]) * 0.750062)
             uv = hourly["uv_index"][i]
-            print(f"{display_time:<8} | {f'{temp}°C':<11} | {f'{rain_prob}%':<17} | {f'{uv}':<10} | {f'{hpa} мм'}")
+            print(f"{display_time:<8} | {f'{temp}°C':<11} | {f'{rain_prob}%':<19} | {f'{uv}':<10} | {f'{hpa} мм'}")
 if __name__ == "__main__":
     get_weather()
