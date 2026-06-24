@@ -47,8 +47,8 @@ def get_weather():
             hours_printed += 1
             if hours_printed == 24: break
 if __name__ == "__main__":
-    print("Нужно ли напечатать прогноз?(Используется стандартный принтер)\n0 - нет; 1 - да")
-    way = input("Input way: ")
+    print("Нужно ли напечатать прогноз?(Используется стандартный принтер)")
+    way = input("0 - нет; 1 - да: ")
     print("-" * 70)
     if way == "1":
         filename = "weather_report.txt"
