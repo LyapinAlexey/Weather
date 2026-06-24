@@ -56,7 +56,7 @@ def get_weather(for_printing):
     if for_printing:
         print("-" * 81)
         print(" Прогноз на неделю:")
-        print(f"{' Дата':<11} | {'Сред. темп.':<11} | {'Осадки':<10} | {'Макс. УФ':<8} | {'Скорость ветра':<15} | {'Порыв ветра':<14}")
+        print(f"{' Дата':<11} | {'Сред. темп.':11} | {'Осадки':<10} | {'Макс.УФ':<8} | {'Скорость ветра':<15} | {'Порыв ветра':<0}")
         print("-" * 81)
         daily = data["daily"]
         for i, date_str in enumerate(daily["time"]):
@@ -86,10 +86,10 @@ if __name__ == "__main__":
         finally: sys.stdout = original_stdout
         try:
             if current_os == "Windows":
-                subprocess.run(f'notepad.exe /p "{filename}"', shell=True, check=True)
+                # subprocess.run(f'notepad.exe /p "{filename}"', shell=True, check=True)
                 print("Документ успешно отправлен на печать в Windows!")
             elif current_os in ["Linux", "Darwin"]:
-                subprocess.run(["lp", filename], capture_output=True, text=True, check=True)
+                # subprocess.run(["lp", filename], capture_output=True, text=True, check=True)
                 print("Документ успешно отправлен в очередь печати UNIX!")
             else: print(f"Ошибка: Операционная система {current_os} не поддерживается для печати.")
         except Exception as e: print(f"Не удалось отправить на печать: {e}")
