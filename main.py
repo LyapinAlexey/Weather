@@ -56,7 +56,7 @@ def get_weather(for_printing):
     if for_printing:
         print("-" * 81)
         print(" Прогноз на неделю:")
-        print(f"{' Дата':<11} | {'Сред. темп.':<12} | {'Осадки':<10} | {'Макс. УФ':<8} | {'Скорость ветра':<15} | {'Порыв ветра':<14}")
+        print(f"{' Дата':<11} | {'Сред. темп.':<11} | {'Осадки':<10} | {'Макс. УФ':<8} | {'Скорость ветра':<15} | {'Порыв ветра':<14}")
         print("-" * 81)
         daily = data["daily"]
         for i, date_str in enumerate(daily["time"]):
@@ -66,7 +66,7 @@ def get_weather(for_printing):
             uv_max = round(daily["uv_index_max"][i])
             wind_max = daily["wind_speed_10m_max"][i]
             gusts_max = daily["wind_gusts_10m_max"][i]
-            print(f" {parsed_date:<10} | {f'{t_mean}°C':<12} | {f'{rain_sum} мм':<10} | {f'{uv_max}':<8} | {f'{wind_max} км/ч':<15} | {f'{gusts_max} км/ч':<9}")
+            print(f" {parsed_date:<10} | {f'{t_mean}°C':<11} | {f'{rain_sum} мм':<10} | {f'{uv_max}':<8} | {f'{wind_max} км/ч':<15} | {f'{gusts_max} км/ч':<9}")
     if for_printing: print("-" * 81) 
     else: print("-" * 70)
 if __name__ == "__main__":
