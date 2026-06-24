@@ -4,7 +4,7 @@ def get_weather():
     city = "Москва"
     lat = 55.675093
     lon = 37.550441
-    url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,pressure_msl,uv_index&hourly=temperature_2m,precipitation_probability,uv_index,pressure_msl&timezone=auto"
+    url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,pressure_msl,precipitation_probability,uv_index&hourly=temperature_2m,precipitation_probability,uv_index,pressure_msl&timezone=auto"
     try:
         response = requests.get(url)
         response.raise_for_status()
@@ -18,10 +18,12 @@ def get_weather():
     current_temp = data["current"]["temperature_2m"]
     current_uv = data["current"]["uv_index"]
     current_pha = round((data["current"]["pressure_msl"]) * 0.750062)
+    current_rain = data["current"]["precipitation_probability"]
     print(f"Город: {city}")
     print(f"Текущая температура: {current_temp}°C")
     print(f"Текущий УФ-индекс: {current_uv}")
     print(f"Текущее давление: {current_pha}мм")
+    print(f"Вероятность дождя: {current_rain}%")
     print("-" * 70)
     print("Прогноз на оставшуюся часть дня:")
     print(f"{'Время':<8} | {'Температура':<8} | {'Вероятность дождя':<8} | {'УФ-индекс':<10} | {'Давление':<12}")
