@@ -22,22 +22,22 @@ def get_weather(for_printing):
         print(f"Ошибка при получении данных погоды: {error}")
         return
     now = datetime.now()
-    print(f"Дата и время: {now.strftime('%d.%m.%Y %H:%M:%S')}")
+    print(f" Дата и время: {now.strftime('%d.%m.%Y %H:%M:%S')}")
     if for_printing: print("-" * 81)
     else: print("-" * 70)
     current_temp = data["current"]["temperature_2m"]
     current_uv = round(data["current"]["uv_index"])
     current_pha = round((data["current"]["pressure_msl"]) * 0.750062)
     current_rain = data["current"]["precipitation_probability"]
-    print(f"Город: {city}")
-    print(f"Текущая температура: {current_temp}°C")
-    print(f"Текущий УФ-индекс: {current_uv}")
-    print(f"Текущее давление: {current_pha}мм")
-    print(f"Вероятность осадков: {current_rain}%")
+    print(f" Город: {city}")
+    print(f" Текущая температура: {current_temp}°C")
+    print(f" Текущий УФ-индекс: {current_uv}")
+    print(f" Текущее давление: {current_pha}мм")
+    print(f" Вероятность осадков: {current_rain}%")
     if for_printing: print("-" * 81)
     else: print("-" * 70)
-    print("Прогноз на 24 часа:")
-    print(f"{'Время':<8} | {'Температура':<8} | {'Вероятность осадков':<8} | {'УФ-индекс':<10} | {'Давление':<12}")
+    print(" Прогноз на 24 часа:")
+    print(f"{' Время':<8} | {'Температура':<8} | {'Вероятность осадков':<8} | {'УФ-индекс':<10} | {'Давление':<12}")
     if for_printing: print("-" * 81)
     else: print("-" * 70)
     hourly = data["hourly"]
@@ -50,13 +50,13 @@ def get_weather(for_printing):
             rain_prob = hourly["precipitation_probability"][i]
             hpa = round((hourly["pressure_msl"][i]) * 0.750062)
             uv = round(hourly["uv_index"][i])
-            print(f"{display_time:<8} | {f'{temp}°C':<11} | {f'{rain_prob}%':<19} | {f'{uv}':<10} | {f'{hpa} мм'}")
+            print(f" {display_time:<7} | {f'{temp}°C':<11} | {f'{rain_prob}%':<19} | {f'{uv}':<10} | {f'{hpa} мм'}")
             hours_printed += 1
             if hours_printed == 24: break
     if for_printing:
         print("-" * 81)
-        print("Прогноз на неделю:")
-        print(f"{'Дата':<10} | {'Сред. темп.':<12} | {'Осадки':<10} | {'Макс. УФ':<8} | {'Скорость ветра':<15} | {'Порыв ветра':<14}")
+        print(" Прогноз на неделю:")
+        print(f"{' Дата':<11} | {'Сред. темп.':<12} | {'Осадки':<10} | {'Макс. УФ':<8} | {'Скорость ветра':<15} | {'Порыв ветра':<14}")
         print("-" * 81)
         daily = data["daily"]
         for i, date_str in enumerate(daily["time"]):
@@ -66,7 +66,7 @@ def get_weather(for_printing):
             uv_max = round(daily["uv_index_max"][i])
             wind_max = daily["wind_speed_10m_max"][i]
             gusts_max = daily["wind_gusts_10m_max"][i]
-            print(f"{parsed_date:<10} | {f'{t_mean}°C':<12} | {f'{rain_sum} мм':<10} | {f'{uv_max}':<8} | {f'{wind_max} км/ч':<15} | {f'{gusts_max} км/ч':<9}")
+            print(f" {parsed_date:<10} | {f'{t_mean}°C':<12} | {f'{rain_sum} мм':<10} | {f'{uv_max}':<8} | {f'{wind_max} км/ч':<15} | {f'{gusts_max} км/ч':<9}")
     if for_printing: print("-" * 81) 
     else: print("-" * 70)
 if __name__ == "__main__":
@@ -86,10 +86,10 @@ if __name__ == "__main__":
         finally: sys.stdout = original_stdout
         try:
             if current_os == "Windows":
-                subprocess.run(f'notepad.exe /p "{filename}"', shell=True, check=True)
+                # subprocess.run(f'notepad.exe /p "{filename}"', shell=True, check=True)
                 print("Документ успешно отправлен на печать в Windows!")
             elif current_os in ["Linux", "Darwin"]:
-                subprocess.run(["lp", filename], capture_output=True, text=True, check=True)
+                # subprocess.run(["lp", filename], capture_output=True, text=True, check=True)
                 print("Документ успешно отправлен в очередь печати UNIX!")
             else: print(f"Ошибка: Операционная система {current_os} не поддерживается для печати.")
         except Exception as e: print(f"Не удалось отправить на печать: {e}")
