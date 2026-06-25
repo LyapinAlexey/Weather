@@ -11,6 +11,7 @@ ORANGE = "\033[35m"
 RED = "\033[31m"
 BLUE = "\033[34m"
 CYAN = "\033[36m"
+BOLD = "\033[1m"
 for_printing = False
 API_KEY = os.getenv("WEATHER_API_KEY")
 KEY_FILE = "weather_key.txt"
@@ -65,9 +66,13 @@ def get_weather(for_printing):
     current_condition = data["current"]["condition"]["text"]
     aqi_data = data["current"].get("air_quality", {})
     epa_index = aqi_data.get("us-epa-index", 0)
+    try: current_rain = forecast_day[0]["hour"][current_hour_int]["chance_of_rain"]
+    except (IndexError, KeyError): current_rain = None
     aqi_status = ("Нет данных", RESET)
     uv_status = ("Нет данных", RESET)
     temp_status = ("Нет данных", RESET)
+    pha_status = ("Нет данных", RESET)
+    rain_status = ("Нет данных", RESET)
     if epa_index == 1: aqi_status = ("Отличное (Чистый воздух)", GREEN)
     elif epa_index == 2: aqi_status = ("Умеренное (Норма)", YELLOW)
     elif epa_index == 3: aqi_status = ("Низкое (Вредно для уязвимых групп)", ORANGE)
@@ -86,22 +91,33 @@ def get_weather(for_printing):
     elif 16.0 <= current_temp < 26.0: temp_status = (f"{current_temp}°C", YELLOW)
     elif current_temp >= 26.0: temp_status = (f"{current_temp}°C", RED)
     temp_text, temp_color = temp_status
+    if current_pha < 745: pha_status = (f"{current_pha} мм (Пониженно)", CYAN)   
+    elif 745 <= current_pha <= 755: pha_status = (f"{current_pha} мм (Отлично)", GREEN)
+    elif 756 <= current_pha <= 765: pha_status = (f"{current_pha} мм (Норма)", YELLOW)
+    elif current_pha >= 766: pha_status = (f"{current_pha} мм (Повышенно)", RED)
+    pha_text, pha_color = pha_status
+    if current_rain < 30: rain_status = (f"{current_rain}%", RESET)   
+    elif 31 <= current_rain < 60: rain_status = (f"{current_rain}%", CYAN)
+    elif current_rain >= 61: rain_status = (f"{current_rain}%", BLUE)    
+    rain_text, rain_color = rain_status  
     if for_printing:
         aqi_display = aqi_text
         uv_display = uv_text
         temp_display = temp_text
+        pha_display = pha_text
+        rain_display = rain_text
     else:
         aqi_display = f"{aqi_color}{aqi_text}{RESET}"
         uv_display = f"{uv_color}{uv_text}{RESET}"
         temp_display = f"{temp_color}{temp_text}{RESET}"
-    try: current_rain = forecast_day[0]["hour"][current_hour_int]["chance_of_rain"]
-    except (IndexError, KeyError): current_rain = None
-    print(f" Город: {location['name']} ({location['country']})")
+        pha_display = f"{pha_color}{pha_text}{RESET}"
+        rain_display = f"{rain_color}{rain_text}{RESET}"
+    print(f" Город: {BOLD}{location['name']}{RESET} ({BOLD}{location['country']}{RESET})")
     print(f" Текущая температура: {temp_display}")
     print(f" Качество воздуха: {aqi_display}")
     print(f" Текущий УФ-индекс: {uv_display}")
-    print(f" Текущее давление: {current_pha} мм рт. ст.")
-    print(f" Вероятность осадков: {current_rain}%")
+    print(f" Текущее давление: {pha_display}")
+    print(f" Вероятность осадков: {rain_display}")
     print(f" Погода: {current_condition}")
     if for_printing: print("-" * 81)
     else: print("-" * 70)
@@ -141,7 +157,7 @@ def get_weather(for_printing):
     else: print("-" * 70)
 if __name__ == "__main__":
     print("Нужно ли напечатать прогноз?(Используется стандартный принтер)")
-    way = input("no - Нет; yes - Да: ")
+    way = input("No; Yes: ")
     print("-" * 70)
     if way.lower() == "yes":
         for_printing = True
