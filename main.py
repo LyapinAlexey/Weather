@@ -99,20 +99,22 @@ def get_weather(for_printing):
     if current_rain < 30: rain_status = (f"{current_rain}%", RESET)   
     elif 31 <= current_rain < 60: rain_status = (f"{current_rain}%", CYAN)
     elif current_rain >= 61: rain_status = (f"{current_rain}%", BLUE)    
-    rain_text, rain_color = rain_status  
+    rain_text, rain_color = rain_status
+    loc = f" Город: {BOLD}{location['name']}{RESET} ({BOLD}{location['country']}{RESET})"  
     if for_printing:
         aqi_display = aqi_text
         uv_display = uv_text
         temp_display = temp_text
         pha_display = pha_text
         rain_display = rain_text
+        loc = f" Город: {location['name']} ({location['country']})"  
     else:
         aqi_display = f"{aqi_color}{aqi_text}{RESET}"
         uv_display = f"{uv_color}{uv_text}{RESET}"
         temp_display = f"{temp_color}{temp_text}{RESET}"
         pha_display = f"{pha_color}{pha_text}{RESET}"
         rain_display = f"{rain_color}{rain_text}{RESET}"
-    print(f" Город: {BOLD}{location['name']}{RESET} ({BOLD}{location['country']}{RESET})")
+    print(loc)
     print(f" Текущая температура: {temp_display}")
     print(f" Качество воздуха: {aqi_display}")
     print(f" Текущий УФ-индекс: {uv_display}")
