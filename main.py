@@ -1,6 +1,7 @@
 from datetime import datetime
 import requests
 import sys
+import os
 import platform
 import subprocess
 RESET = "\033[0m"
@@ -11,7 +12,20 @@ RED = "\033[31m"
 BLUE = "\033[34m"
 CYAN = "\033[36m"
 for_printing = False
-API_KEY = "0f9495745ad44d309e5155406262406" 
+API_KEY = os.getenv("WEATHER_API_KEY")
+KEY_FILE = "weather_key.txt"
+if not API_KEY and os.path.exists(KEY_FILE):
+    with open(KEY_FILE, "r", encoding="utf-8") as f: API_KEY = f.read().strip()
+if not API_KEY:
+    print("🔑 API-ключ погоды не найден.")
+    API_KEY = input("Пожалуйста, вставьте ваш WeatherAPI Key: ").strip()
+    try:
+        with open(KEY_FILE, "w", encoding="utf-8") as f:
+            f.write(API_KEY)
+        print(f"✅ Ключ успешно сохранен в файл '{KEY_FILE}' и больше не потребуется!")
+        print("-" * 70)
+    except Exception as e:
+        print(f"⚠️ Не удалось сохранить ключ в файл: {e}")
 def get_weather(for_printing):
     try:
         response_ip = requests.get("http://ip-api.com/json/").json()
@@ -20,22 +34,22 @@ def get_weather(for_printing):
             lat = response_ip.get("lat")
             lon = response_ip.get("lon")
         else:
-            print("Ошибка: Сервис геолокации вернул неудачный статус.")
+            print("⚠️Ошибка: Сервис геолокации вернул неудачный статус.")
             return
     except Exception as err:
-        print(f"Ошибка при определении локации через API: {err}")
+        print(f"⚠️Ошибка при определении локации через API: {err}")
         return
     city_query = city
     try: url = f"http://api.weatherapi.com/v1/forecast.json?key={API_KEY}&q={city_query}&days=3&aqi=yes&alerts=no&lang=ru"
     except Exception as er:
-        print(f"Ошибка при формировании URL: {er}")
+        print(f"⚠️Ошибка при формировании URL: {er}")
         return
     try:
         response = requests.get(url)
         response.raise_for_status()
         data = response.json()
     except Exception as error:
-        print(f"Ошибка при получении данных погоды: {error}")
+        print(f"⚠️Ошибка при получении данных погоды: {error}")
         return
     now = datetime.now()
     print(f" Дата и время: {now.strftime('%d.%m.%Y %H:%M:%S')}")
@@ -127,9 +141,9 @@ def get_weather(for_printing):
     else: print("-" * 70)
 if __name__ == "__main__":
     print("Нужно ли напечатать прогноз?(Используется стандартный принтер)")
-    way = input("0 - Нет; 1 - Да: ")
+    way = input("no - Нет; yes - Да: ")
     print("-" * 70)
-    if way == "1":
+    if way.lower() == "yes":
         for_printing = True
         filename = "weather_report.txt"
         original_stdout = sys.stdout
@@ -143,12 +157,12 @@ if __name__ == "__main__":
         try:
             if current_os == "Windows":
                 subprocess.run(f'notepad.exe /p "{filename}"', shell=True, check=True)
-                print("Документ успешно отправлен на печать в Windows!")
+                print("✅Документ успешно отправлен на печать в Windows!")
             elif current_os in ["Linux", "Darwin"]:
                 subprocess.run(["lp", filename], capture_output=True, text=True, check=True)
-                print("Документ успешно отправлен в очередь печати UNIX!")
-            else: print(f"Ошибка: Операционная система {current_os} не поддерживается для печати.")
-        except Exception as e: print(f"Не удалось отправить на печать: {e}")
+                print("✅Документ успешно отправлен в очередь печати UNIX!")
+            else: print(f"⚠️Ошибка: Операционная система {current_os} не поддерживается для печати.")
+        except Exception as e: print(f"⚠️Не удалось отправить на печать: {e}")
     else:
         for_printing = False
         get_weather(for_printing)
