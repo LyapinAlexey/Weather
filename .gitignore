@@ -1,3 +1,17 @@
+# Secret files
+.env
+CLI/weather_key.txt
+
+# Folders of Virtual Python
+venv/
+.venv/
+env/
+
+# Python compilier
+__pycache__/
+*.pyc
+
+# System files
 .DS_Store
-weather_report.txt
-weather_key.txt
+Thumbs.db
+CLI/weather_report.txt

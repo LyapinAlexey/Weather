@@ -1,2 +1,3 @@
 Weather channel
-python -m pip install requests
+Requests - python -m pip install requests
+If you need WEB - python -m pip install flask
