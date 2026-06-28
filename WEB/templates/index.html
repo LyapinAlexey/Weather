@@ -77,14 +77,14 @@
         <div class="table-container">
             <table>
                 <thead>
-                    <tr><th>Time</th><th>Temperature</th><th>Rain %</th><th>UV Index</th><th>Pressure</th></tr>
+                    <tr><th>Time</th><th>Temperature</th><th>Precipitation %</th><th>UV Index</th><th>Pressure</th></tr>
                 </thead>
                 <tbody>
                     {% for hour in hourly %}
                     <tr>
                         <td><strong>{{ hour.time }}</strong></td>
                         <td>{{ hour.temp }}°C</td>
-                        <td>{{ hour.rain }}%</td>
+                        <td>{{ hour.precipitation }}%</td>
                         <td>{{ hour.uv }}</td>
                         <td>{{ hour.pressure }} mmHg</td>
                     </tr>
@@ -97,14 +97,14 @@
         <div class="table-container">
             <table>
                 <thead>
-                    <tr><th>Date</th><th>Avg Temp</th><th>Rain (mm)</th><th>Max UV</th><th>Wind Speed</th><th>Gusts</th></tr>
+                    <tr><th>Date</th><th>Avg Temp</th><th>Precipitation (mm)</th><th>Max UV</th><th>Wind Speed</th><th>Gusts</th></tr>
                 </thead>
                 <tbody>
                     {% for day in daily %}
                     <tr>
                         <td><strong>{{ day.date }}</strong></td>
                         <td>{{ day.temp }}°C</td>
-                        <td>{{ day.rain }} mm</td>
+                        <td>{{ day.precipitation }} mm</td>
                         <td>{{ day.uv }}</td>
                         <td>{{ day.wind }} km/h</td>
                         <td>{{ day.gust }} km/h</td>

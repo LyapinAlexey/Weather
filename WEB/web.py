@@ -55,10 +55,11 @@ def index():
         count = 0
         for hour in all_hours:
             if hour["time"] >= current_hour_str:
+                prob_precip = max(hour.get("chance_of_rain", 0), hour.get("chance_of_snow", 0))
                 hourly_forecast.append({
                     "time": hour["time"].split(" ")[1],
                     "temp": hour["temp_c"],
-                    "rain": hour["chance_of_rain"],
+                    "precipitation": prob_precip,  
                     "uv": round(hour["uv"]),
                     "pressure": round(hour["pressure_mb"] * 0.750062)
                 })
@@ -69,10 +70,10 @@ def index():
             daily_forecast.append({
                 "date": d_obj.strftime("%d.%m.%Y"),
                 "temp": day["day"]["avgtemp_c"],
-                "rain": day["day"]["totalprecip_mm"],
+                "precipitation": day["day"]["totalprecip_mm"],
                 "uv": round(day["day"]["uv"]),
                 "wind": day["day"]["maxwind_kph"],
-                "gust": round(day["day"]["maxwind_kph"] * 1.2)
+                "gust": round(day["day"].get("maxwind_kph", 0))
             })
     return render_template(
         "index.html", 
