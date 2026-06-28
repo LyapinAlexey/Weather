@@ -14,46 +14,46 @@ CYAN = "\033[36m"
 BOLD = "\033[1m"
 for_printing = False
 API_KEY = os.getenv("WEATHER_API_KEY")
-KEY_FILE = "weather_key.txt"
+KEY_FILE = "CLI/weather_key.txt"
 if not API_KEY and os.path.exists(KEY_FILE):
     with open(KEY_FILE, "r", encoding="utf-8") as f: API_KEY = f.read().strip()
 if not API_KEY:
-    print("🔑 API-ключ погоды не найден.")
-    API_KEY = input("Пожалуйста, вставьте ваш WeatherAPI Key: ").strip()
+    print("🔑 API-key not found.")
+    API_KEY = input("Please insert your WeatherAPI Key: ").strip()
     try:
         with open(KEY_FILE, "w", encoding="utf-8") as f:
             f.write(API_KEY)
-        print(f"✅ Ключ успешно сохранен в файл '{KEY_FILE}' и больше не потребуется!")
+        print(f"✅ Key successfully saved to file '{KEY_FILE}' and will not be required again!")
         print("-" * 70)
     except Exception as e:
-        print(f"⚠️ Не удалось сохранить ключ в файл: {e}")
+        print(f"⚠️ Failed to save key to file: {e}")
 def get_weather(for_printing):
     try:
         response_ip = requests.get("http://ip-api.com/json/").json()
         if response_ip.get("status") == "success":
-            city = response_ip.get("city", "Неизвестный город")
+            city = response_ip.get("city", "Unknown city")
             lat = response_ip.get("lat")
             lon = response_ip.get("lon")
         else:
-            print("⚠️Ошибка: Сервис геолокации вернул неудачный статус.")
+            print("⚠️Error: Geolocation service returned failure status.")
             return
     except Exception as err:
-        print(f"⚠️Ошибка при определении локации через API: {err}")
+        print(f"⚠️Error occurred while determining location via API: {err}")
         return
     city_query = city
     try: url = f"http://api.weatherapi.com/v1/forecast.json?key={API_KEY}&q={city_query}&days=3&aqi=yes&alerts=no&lang=ru"
     except Exception as er:
-        print(f"⚠️Ошибка при формировании URL: {er}")
+        print(f"⚠️Error occurred while forming URL: {er}")
         return
     try:
         response = requests.get(url)
         response.raise_for_status()
         data = response.json()
     except Exception as error:
-        print(f"⚠️Ошибка при получении данных погоды: {error}")
+        print(f"⚠️Error occurred while fetching weather data: {error}")
         return
     now = datetime.now()
-    print(f" Дата и время: {now.strftime('%d.%m.%Y %H:%M:%S')}")
+    print(f" Date and time: {now.strftime('%d.%m.%Y %H:%M:%S')}")
     if for_printing: print("-" * 81)
     else: print("-" * 70)
     location = data["location"]
@@ -68,17 +68,17 @@ def get_weather(for_printing):
     epa_index = aqi_data.get("us-epa-index", 0)
     try: current_rain = forecast_day[0]["hour"][current_hour_int]["chance_of_rain"]
     except (IndexError, KeyError): current_rain = None
-    aqi_status = ("Нет данных", RESET)
-    uv_status = ("Нет данных", RESET)
-    temp_status = ("Нет данных", RESET)
-    pha_status = ("Нет данных", RESET)
-    rain_status = ("Нет данных", RESET)
-    if epa_index == 1: aqi_status = ("Отличное (Чистый воздух)", GREEN)
-    elif epa_index == 2: aqi_status = ("Умеренное (Норма)", YELLOW)
-    elif epa_index == 3: aqi_status = ("Низкое (Вредно для уязвимых групп)", ORANGE)
-    elif epa_index == 4: aqi_status = ("Вредное (Негативное влияние)", ORANGE)
-    elif epa_index == 5: aqi_status = ("Очень вредное (Опасно для здоровья)", RED)
-    elif epa_index == 6: aqi_status = ("Опасное (Чрезвычайная ситуация)", RED)
+    aqi_status = ("No data", RESET)
+    uv_status = ("No data", RESET)
+    temp_status = ("No data", RESET)
+    pha_status = ("No data", RESET)
+    rain_status = ("No data", RESET)
+    if epa_index == 1: aqi_status = ("Excellent (Clean air)", GREEN)
+    elif epa_index == 2: aqi_status = ("Moderate (Normal)", YELLOW)
+    elif epa_index == 3: aqi_status = ("Low (Harmful for sensitive groups)", ORANGE)
+    elif epa_index == 4: aqi_status = ("High (Negative impact)", ORANGE)
+    elif epa_index == 5: aqi_status = ("Very high (Dangerous for health)", RED)
+    elif epa_index == 6: aqi_status = ("Hazardous (Emergency situation)", RED)
     aqi_text, aqi_color = aqi_status
     if 0 <= current_uv <= 2: uv_status = (str(current_uv), GREEN)
     elif 3 <= current_uv <= 5: uv_status = (str(current_uv), YELLOW)
@@ -91,16 +91,16 @@ def get_weather(for_printing):
     elif 16.0 <= current_temp < 26.0: temp_status = (f"{current_temp}°C", YELLOW)
     elif current_temp >= 26.0: temp_status = (f"{current_temp}°C", RED)
     temp_text, temp_color = temp_status
-    if current_pha < 745: pha_status = (f"{current_pha} мм (Пониженно)", CYAN)   
-    elif 745 <= current_pha <= 755: pha_status = (f"{current_pha} мм (Отлично)", GREEN)
-    elif 756 <= current_pha <= 765: pha_status = (f"{current_pha} мм (Норма)", YELLOW)
-    elif current_pha >= 766: pha_status = (f"{current_pha} мм (Повышенно)", RED)
+    if current_pha < 745: pha_status = (f"{current_pha} мм (Low)", CYAN)   
+    elif 745 <= current_pha <= 755: pha_status = (f"{current_pha} мм (Good)", GREEN)
+    elif 756 <= current_pha <= 765: pha_status = (f"{current_pha} мм (Normal)", YELLOW)
+    elif current_pha >= 766: pha_status = (f"{current_pha} мм (High)", RED)
     pha_text, pha_color = pha_status
     if current_rain < 30: rain_status = (f"{current_rain}%", RESET)   
     elif 31 <= current_rain < 60: rain_status = (f"{current_rain}%", CYAN)
     elif current_rain >= 61: rain_status = (f"{current_rain}%", BLUE)    
     rain_text, rain_color = rain_status
-    loc = f" Город: {BOLD}{location['name']}{RESET} ({BOLD}{location['country']}{RESET})"  
+    loc = f" City: {BOLD}{location['name']}{RESET} ({BOLD}{location['country']}{RESET})"  
     if for_printing:
         aqi_display = aqi_text
         uv_display = uv_text
@@ -115,16 +115,16 @@ def get_weather(for_printing):
         pha_display = f"{pha_color}{pha_text}{RESET}"
         rain_display = f"{rain_color}{rain_text}{RESET}"
     print(loc)
-    print(f" Текущая температура: {temp_display}")
-    print(f" Качество воздуха: {aqi_display}")
-    print(f" Текущий УФ-индекс: {uv_display}")
-    print(f" Текущее давление: {pha_display}")
-    print(f" Вероятность осадков: {rain_display}")
-    print(f" Погода: {current_condition}")
+    print(f" Current temperature: {temp_display}")
+    print(f" Air quality: {aqi_display}")
+    print(f" Current UV index: {uv_display}")
+    print(f" Current pressure: {pha_display}")
+    print(f" Probability of precipitation: {rain_display}")
+    print(f" Weather: {current_condition}")
     if for_printing: print("-" * 81)
     else: print("-" * 70)
-    print(" Прогноз на 24 часа:")
-    print(f"{' Время':<7} | {'Температура':<8} | {'Вероятность осадков':<8} | {'УФ-индекс':<9} | {'Давление':<12}")
+    print(" Forecast for 24 hours:")
+    print(f"{' Time':<7} | {'Temperature':<8} | {'Precipitation':<8} | {'UV Index':<9} | {'Pressure':<12}")
     if for_printing: print("-" * 81)
     else: print("-" * 70)
     all_hours = []
@@ -144,8 +144,8 @@ def get_weather(for_printing):
             if hours_printed == 24: break
     if for_printing:
         print("-" * 81)
-        print(" Прогноз на 3 дня:")
-        print(f"{' Дата':<11} | {'Сред. темп.':<11} | {'Осадки':<9} | {'Макс.УФ':<7} | {'Скорость ветра':<14} | {'Порыв ветра':<12}")
+        print(" Forecast for 3 days:")
+        print(f"{' Date':<11} | {'Avg. Temp':<11} | {'Precipitation':<9} | {'Max UV':<7} | {'Wind Speed':<14} | {'Gusts':<12}")
         for day in data["forecast"]["forecastday"]:
             date_obj = datetime.strptime(day["date"], "%Y-%m-%d")
             parsed_date = date_obj.strftime("%d.%m.%Y")
@@ -158,7 +158,7 @@ def get_weather(for_printing):
     if for_printing: print("-" * 81) 
     else: print("-" * 70)
 if __name__ == "__main__":
-    print("Нужно ли напечатать прогноз?(Используется стандартный принтер)")
+    print("Need to print the forecast?(Using default printer)")
     way = input("No; Yes: ")
     print("-" * 70)
     if way.lower() == "yes":
@@ -175,12 +175,12 @@ if __name__ == "__main__":
         try:
             if current_os == "Windows":
                 subprocess.run(f'notepad.exe /p "{filename}"', shell=True, check=True)
-                print("✅Документ успешно отправлен на печать в Windows!")
+                print("✅Document successfully sent to print in Windows!")
             elif current_os in ["Linux", "Darwin"]:
                 subprocess.run(["lp", filename], capture_output=True, text=True, check=True)
-                print("✅Документ успешно отправлен в очередь печати UNIX!")
-            else: print(f"⚠️Ошибка: Операционная система {current_os} не поддерживается для печати.")
-        except Exception as e: print(f"⚠️Не удалось отправить на печать: {e}")
+                print("✅Document successfully sent to print queue in UNIX!")
+            else: print(f"⚠️Error: Operating system {current_os} is not supported for printing.")
+        except Exception as e: print(f"⚠️Failed to send to print: {e}")
     else:
         for_printing = False
         get_weather(for_printing)
