@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.png') }}" type="image/png">
+    <meta charset="UTF-8">
+    <title>My weather</title>
+    <style>
+    .sunny { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+    .rainy { background: linear-gradient(135deg, #203a43, #2c5364); }
+    .cloudy { background: linear-gradient(135deg, #757f9a, #d7dde8); }
+    .thunder { background: linear-gradient(135deg, #141e30, #243b55); }
+
+    .rainy::after {
+        content: "";
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: url('https://www.transparenttextures.com/patterns/rain.png'); 
+        animation: rain-fall 1s linear infinite;
+        pointer-events: none; 
+    }
+    @keyframes rain-fall {
+        0% { background-position: 0 0; }
+        100% { background-position: 0 100px; }
+    }
+    .thunder { animation: thunder-flash 2s infinite; }
+    @keyframes thunder-flash {
+        0%, 95%, 98% { opacity: 1; }
+        96%, 99% { opacity: 0.3; } 
+    }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            margin: 0; padding: 40px; display: flex; justify-content: center; 
+            min-height: 100vh; transition: background 0.8s ease; 
+        }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); width: 100%; max-width: 800px; }
+        h1 { margin-top: 0; color: #1877f2; font-size: 28px; }
+        .time { color: #65676b; font-size: 14px; margin-bottom: 20px; }
+        .search-form { display: flex; gap: 10px; margin-bottom: 25px; }
+        input[type="text"] { flex: 1; padding: 12px; border: 1px solid #ced4da; border-radius: 8px; font-size: 16px; }
+        button { padding: 12px 20px; background-color: #1877f2; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #166fe5; }
+        .weather-info p { font-size: 16px; margin: 10px 0; border-bottom: 1px solid #f0f2f5; padding-bottom: 8px; }
+        .error { color: #e41e3f; background: #ffebe9; padding: 10px; border-radius: 6px; font-weight: bold; }
+        h3 { color: #1c1e21; margin-top: 30px; margin-bottom: 15px; border-left: 4px solid #1877f2; padding-left: 10px; }
+        .table-container { width: 100%; overflow-x: auto; margin-bottom: 20px; border-radius: 8px; border: 1px solid #e4e6eb; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 15px; }
+        th, td { padding: 12px; border-bottom: 1px solid #e4e6eb; }
+        th { background-color: #f0f2f5; color: #65676b; font-weight: 600; }
+        tr:hover { background-color: #f9f9fb; }
+    </style>
+</head>
+<body class="{{ bg_class }}">
+<div class="card">
+    <h1>🌤 Weather Forecast</h1>
+    <div class="time">Data for: {{ now }}</div>
+
+    <form class="search-form" method="POST">
+        <input type="text" name="city" placeholder="Enter city (e.g., Paris)...">
+        <button type="submit">Get Info</button>
+    </form>
+
+    {% if error %}
+        <p class="error">{{ error }}</p>
+    {% endif %}
+
+    {% if weather %}
+        <div class="weather-info">
+            <h2>{{ weather.location.name }}, {{ weather.location.country }}</h2>
+            <p><strong>🌡 Current Temperature:</strong> {{ weather.current.temp_c }}°C</p>
+            <p><strong>📝 Condition:</strong> {{ weather.current.condition.text }}</p>
+            <p><strong>☀️ Current UV Index:</strong> {{ weather.current.uv }}</p>
+            <p><strong>⏲ Current Pressure:</strong> {{ (weather.current.pressure_mb * 0.750062)|round|int }} mmHg</p>
+            <p><strong>💧 Humidity:</strong> {{ weather.current.humidity }}%</p>
+        </div>
+
+        <h3>⏰ 24-Hour Forecast</h3>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr><th>Time</th><th>Temperature</th><th>Rain %</th><th>UV Index</th><th>Pressure</th></tr>
+                </thead>
+                <tbody>
+                    {% for hour in hourly %}
+                    <tr>
+                        <td><strong>{{ hour.time }}</strong></td>
+                        <td>{{ hour.temp }}°C</td>
+                        <td>{{ hour.rain }}%</td>
+                        <td>{{ hour.uv }}</td>
+                        <td>{{ hour.pressure }} mmHg</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <h3>📅 3-Day Forecast</h3>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr><th>Date</th><th>Avg Temp</th><th>Rain (mm)</th><th>Max UV</th><th>Wind Speed</th><th>Gusts</th></tr>
+                </thead>
+                <tbody>
+                    {% for day in daily %}
+                    <tr>
+                        <td><strong>{{ day.date }}</strong></td>
+                        <td>{{ day.temp }}°C</td>
+                        <td>{{ day.rain }} mm</td>
+                        <td>{{ day.uv }}</td>
+                        <td>{{ day.wind }} km/h</td>
+                        <td>{{ day.gust }} km/h</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>
+</body>
+</html>
