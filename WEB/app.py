@@ -1,4 +1,6 @@
 import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from datetime import datetime
 from flask import Flask, render_template, request
 from config import Config
@@ -6,7 +8,6 @@ from services import WeatherService
 app = Flask(__name__)
 app.config.from_object(Config)
 def determine_bg_class(condition_text: str) -> str:
-    """Вспомогательная функция для выбора CSS-класса заднего фона."""
     text = condition_text.lower()
     if any(word in text for word in ["clear", "sunny"]):
         return "sunny"
@@ -34,7 +35,6 @@ def index():
     api_localtime = datetime.strptime(data["location"]["localtime"], "%Y-%m-%d %H:%M")
     current_hour_str = api_localtime.strftime("%Y-%m-%d %H:00")
     all_hours = [hour for day in data["forecast"]["forecastday"] for hour in day["hour"]]
-    
     count = 0
     for hour in all_hours:
         if hour["time"] >= current_hour_str:
