@@ -1,186 +1,131 @@
 from datetime import datetime
-import requests
-import sys
 import os
 import platform
 import subprocess
-RESET = "\033[0m"
-GREEN = "\033[32m"
-YELLOW = "\033[33m"
-ORANGE = "\033[35m"
-RED = "\033[31m"
-BLUE = "\033[34m"
-CYAN = "\033[36m"
-BOLD = "\033[1m"
-for_printing = False
-API_KEY = os.getenv("WEATHER_API_KEY")
-KEY_FILE = "CLI/weather_key.txt"
-if not API_KEY and os.path.exists(KEY_FILE):
-    with open(KEY_FILE, "r", encoding="utf-8") as f: API_KEY = f.read().strip()
-if not API_KEY:
-    print("🔑 API-key not found.")
-    API_KEY = input("Please insert your WeatherAPI Key: ").strip()
-    try:
-        with open(KEY_FILE, "w", encoding="utf-8") as f:
-            f.write(API_KEY)
-        print(f"✅ Key successfully saved to file '{KEY_FILE}' and will not be required again!")
-        print("-" * 70)
-    except Exception as e:
-        print(f"⚠️ Failed to save key to file: {e}")
-def get_weather(for_printing):
-    try:
-        response_ip = requests.get("http://ip-api.com/json/").json()
-        if response_ip.get("status") == "success":
-            city = response_ip.get("city", "Unknown city")
-            lat = response_ip.get("lat")
-            lon = response_ip.get("lon")
+import sys
+import requests
+# Terminal colors
+RESET, GREEN, YELLOW, ORANGE, RED, BLUE, CYAN, BOLD = (
+    "\033[0m", "\033[32m", "\033[33m", "\033[35m", "\033[31m", "\033[34m", "\033[36m", "\033[1m"
+)
+class WeatherService:
+    def __init__(self):
+        self.api_key = self._load_key()
+    def _load_key(self):
+        #Finds or asks for the API key.
+        key_file = "CLI/weather_key.txt"
+        key = os.getenv("WEATHER_API_KEY")
+        if not key and os.path.exists(key_file):
+            with open(key_file, "r", encoding="utf-8") as f:
+                key = f.read().strip()
+        if not key:
+            key = input("🔑 Please insert your WeatherAPI Key: ").strip()
+            os.makedirs("CLI", exist_ok=True)
+            with open(key_file, "w", encoding="utf-8") as f:
+                f.write(key)
+        return key
+    def get_city_by_ip(self):
+        try:
+            res = requests.get("http://ip-api.com/json/").json()
+            return res.get("city") if res.get("status") == "success" else None
+        except Exception:
+            return None
+    def fetch_forecast(self, city):
+        url = f"http://api.weatherapi.com/v1/forecast.json?key={self.api_key}&q={city}&days=3&aqi=yes&alerts=no&lang=en"
+        try:
+            res = requests.get(url)
+            res.raise_for_status()
+            return res.json()
+        except Exception as e:
+            print(f"⚠️ Error fetching weather: {e}")
+            return None
+class WeatherReport:
+    #Handles color calculations and building the text output.
+    def __init__(self, data, for_printing=False):
+        self.data = data
+        self.for_printing = for_printing
+        self.loc = data["location"]
+        self.curr = data["current"]
+        self.days = data["forecast"]["forecastday"]
+        self.local_time = datetime.strptime(self.loc["localtime"], "%Y-%m-%d %H:%M")
+        self.line_len = 81 if for_printing else 70
+    def _color(self, text, color_code):
+        #Applies color only if we are NOT printing to physical paper.
+        return text if self.for_printing else f"{color_code}{text}{RESET}"
+    def get_metrics(self):
+        temp = self.curr["temp_c"]
+        t_color = BLUE if temp < -10 else CYAN if temp < 0 else GREEN if temp < 16 else YELLOW if temp < 26 else RED
+        uv = round(self.curr["uv"])
+        uv_color = GREEN if uv <= 2 else YELLOW if uv <= 5 else ORANGE if uv <= 7 else RED
+        pha = round(self.curr["pressure_mb"] * 0.750062)
+        p_color = CYAN if pha < 745 else GREEN if pha <= 755 else YELLOW if pha <= 765 else RED
+        return (
+            self._color(f"{temp}°C", t_color),
+            self._color(str(uv), uv_color),
+            self._color(f"{pha} мм", p_color)
+        )
+    def print_all(self):
+        print(f" Date and time: {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}")
+        print("-" * self.line_len)
+        if self.for_printing:
+            print(f" Город: {self.loc['name']} ({self.loc['country']})")
         else:
-            print("⚠️Error: Geolocation service returned failure status.")
-            return
-    except Exception as err:
-        print(f"⚠️Error occurred while determining location via API: {err}")
-        return
-    city_query = city
-    try: url = f"http://api.weatherapi.com/v1/forecast.json?key={API_KEY}&q={city_query}&days=3&aqi=yes&alerts=no&lang=ru"
-    except Exception as er:
-        print(f"⚠️Error occurred while forming URL: {er}")
-        return
-    try:
-        response = requests.get(url)
-        response.raise_for_status()
-        data = response.json()
-    except Exception as error:
-        print(f"⚠️Error occurred while fetching weather data: {error}")
-        return
-    now = datetime.now()
-    print(f" Date and time: {now.strftime('%d.%m.%Y %H:%M:%S')}")
-    if for_printing: print("-" * 81)
-    else: print("-" * 70)
-    location = data["location"]
-    api_local_time = datetime.strptime(location["localtime"], "%Y-%m-%d %H:%M")
-    forecast_day = data["forecast"]["forecastday"]
-    current_hour_int = api_local_time.hour
-    current_temp = data["current"]["temp_c"]
-    current_uv = round(data["current"]["uv"])
-    current_pha = round(data["current"]["pressure_mb"] * 0.750062) 
-    current_condition = data["current"]["condition"]["text"]
-    aqi_data = data["current"].get("air_quality", {})
-    epa_index = aqi_data.get("us-epa-index", 0)
-    try: current_rain = forecast_day[0]["hour"][current_hour_int]["chance_of_rain"]
-    except (IndexError, KeyError): current_rain = None
-    aqi_status = ("No data", RESET)
-    uv_status = ("No data", RESET)
-    temp_status = ("No data", RESET)
-    pha_status = ("No data", RESET)
-    rain_status = ("No data", RESET)
-    if epa_index == 1: aqi_status = ("Excellent (Clean air)", GREEN)
-    elif epa_index == 2: aqi_status = ("Moderate (Normal)", YELLOW)
-    elif epa_index == 3: aqi_status = ("Low (Harmful for sensitive groups)", ORANGE)
-    elif epa_index == 4: aqi_status = ("High (Negative impact)", ORANGE)
-    elif epa_index == 5: aqi_status = ("Very high (Dangerous for health)", RED)
-    elif epa_index == 6: aqi_status = ("Hazardous (Emergency situation)", RED)
-    aqi_text, aqi_color = aqi_status
-    if 0 <= current_uv <= 2: uv_status = (str(current_uv), GREEN)
-    elif 3 <= current_uv <= 5: uv_status = (str(current_uv), YELLOW)
-    elif 6 <= current_uv <= 7: uv_status = (str(current_uv), ORANGE)
-    elif current_uv >= 8: uv_status = (str(current_uv), RED)
-    uv_text, uv_color = uv_status
-    if current_temp < -10.0: temp_status = (f"{current_temp}°C", BLUE)
-    elif -10.0 <= current_temp < 0.0: temp_status = (f"{current_temp}°C", CYAN)
-    elif 0.0 <= current_temp < 16.0: temp_status = (f"{current_temp}°C", GREEN)
-    elif 16.0 <= current_temp < 26.0: temp_status = (f"{current_temp}°C", YELLOW)
-    elif current_temp >= 26.0: temp_status = (f"{current_temp}°C", RED)
-    temp_text, temp_color = temp_status
-    if current_pha < 745: pha_status = (f"{current_pha} мм (Low)", CYAN)   
-    elif 745 <= current_pha <= 755: pha_status = (f"{current_pha} мм (Good)", GREEN)
-    elif 756 <= current_pha <= 765: pha_status = (f"{current_pha} мм (Normal)", YELLOW)
-    elif current_pha >= 766: pha_status = (f"{current_pha} мм (High)", RED)
-    pha_text, pha_color = pha_status
-    if current_rain < 30: rain_status = (f"{current_rain}%", RESET)   
-    elif 31 <= current_rain < 60: rain_status = (f"{current_rain}%", CYAN)
-    elif current_rain >= 61: rain_status = (f"{current_rain}%", BLUE)    
-    rain_text, rain_color = rain_status
-    loc = f" City: {BOLD}{location['name']}{RESET} ({BOLD}{location['country']}{RESET})"  
-    if for_printing:
-        aqi_display = aqi_text
-        uv_display = uv_text
-        temp_display = temp_text
-        pha_display = pha_text
-        rain_display = rain_text
-        loc = f" Город: {location['name']} ({location['country']})"  
-    else:
-        aqi_display = f"{aqi_color}{aqi_text}{RESET}"
-        uv_display = f"{uv_color}{uv_text}{RESET}"
-        temp_display = f"{temp_color}{temp_text}{RESET}"
-        pha_display = f"{pha_color}{pha_text}{RESET}"
-        rain_display = f"{rain_color}{rain_text}{RESET}"
-    print(loc)
-    print(f" Current temperature: {temp_display}")
-    print(f" Air quality: {aqi_display}")
-    print(f" Current UV index: {uv_display}")
-    print(f" Current pressure: {pha_display}")
-    print(f" Probability of precipitation: {rain_display}")
-    print(f" Weather: {current_condition}")
-    if for_printing: print("-" * 81)
-    else: print("-" * 70)
-    print(" Forecast for 24 hours:")
-    print(f"{' Time':<7} | {'Temperature':<8} | {'Precipitation':<8} | {'UV Index':<9} | {'Pressure':<12}")
-    if for_printing: print("-" * 81)
-    else: print("-" * 70)
-    all_hours = []
-    for day in forecast_day: all_hours.extend(day["hour"])
-    current_hour_str = api_local_time.strftime("%Y-%m-%d %H:00")
-    hours_printed = 0
-    for hour in all_hours:
-        if hour["time"] >= current_hour_str:
-            display_time = hour["time"].split(" ")[1]
-            temp = hour["temp_c"]
-            rain_prob = hour["chance_of_rain"]
-            hpa = round(hour["pressure_mb"] * 0.750062)
-            uv = round(hour["uv"])
-            condition_text = hour["condition"]["text"]
-            print(f" {display_time:<6} | {f'{temp}°C':<11} | {f'{rain_prob}%':<19} | {f'{uv}':<9} | {f'{hpa} мм':<12}")
-            hours_printed += 1
-            if hours_printed == 24: break
-    if for_printing:
-        print("-" * 81)
-        print(" Forecast for 3 days:")
-        print(f"{' Date':<11} | {'Avg. Temp':<11} | {'Precipitation':<9} | {'Max UV':<7} | {'Wind Speed':<14} | {'Gusts':<12}")
-        for day in data["forecast"]["forecastday"]:
-            date_obj = datetime.strptime(day["date"], "%Y-%m-%d")
-            parsed_date = date_obj.strftime("%d.%m.%Y")
-            t_mean = day["day"]["avgtemp_c"]
-            rain_sum = day["day"]["totalprecip_mm"]
-            uv_max = round(day["day"]["uv"])
-            wind_max = day["day"]["maxwind_kph"]
-            gusts_max = round(wind_max * 1.2) 
-            print(f" {parsed_date:<9} | {f'{t_mean}°C':<11} | {f'{rain_sum} мм':<9} | {f'{uv_max}':<7} | {f'{wind_max} км/ч':<14} | {f'{gusts_max} км/ч':<12}")
-    if for_printing: print("-" * 81) 
-    else: print("-" * 70)
-if __name__ == "__main__":
-    print("Need to print the forecast?(Using default printer)")
-    way = input("No; Yes: ")
-    print("-" * 70)
-    if way.lower() == "yes":
-        for_printing = True
+            print(f" City: {BOLD}{self.loc['name']}{RESET} ({BOLD}{self.loc['country']}{RESET})")
+        temp_out, uv_out, pha_out = self.get_metrics()
+        print(f" Current temperature: {temp_out}")
+        print(f" Current UV index: {uv_out}")
+        print(f" Current pressure: {pha_out}")
+        print(f" Weather: {self.curr['condition']['text']}")
+        print("-" * self.line_len)
+        print(" Forecast for 24 hours:")
+        print(f"{' Time':<7} | {'Temperature':<8} | {'UV Index':<9} | {'Pressure':<12}")
+        print("-" * self.line_len)
+        all_hours = [hr for day in self.days for hr in day["hour"]]
+        curr_str = self.local_time.strftime("%Y-%m-%d %H:00")
+        count = 0
+        for hr in all_hours:
+            if hr["time"] >= curr_str:
+                display_time = hr["time"].split(" ")[1]
+                p_mm = round(hr["pressure_mb"] * 0.750062)
+                print(f" {display_time:<6} | {f'{hr['temp_c']}°C':<11} | {f'{round(hr['uv'])}':<9} | {f'{p_mm} мм':<12}")
+                count += 1
+                if count == 24: break
+        print("-" * self.line_len)
+class App:
+    #The main engine that controls the user flow.
+    def __init__(self):
+        self.service = WeatherService()
+    def send_to_printer(self, report):
         filename = "weather_report.txt"
-        original_stdout = sys.stdout
-        current_os = platform.system()
-        file_encoding = "utf-8-sig" if current_os == "Windows" else "utf-8"
+        os_type = platform.system()
+        encoding = "utf-8-sig" if os_type == "Windows" else "utf-8"
+        orig_stdout = sys.stdout
+        with open(filename, "w", encoding=encoding) as f:
+            sys.stdout = f
+            report.print_all()
+        sys.stdout = orig_stdout
         try:
-            with open(filename, "w", encoding=file_encoding) as f:
-                sys.stdout = f
-                get_weather(for_printing)
-        finally: sys.stdout = original_stdout
-        try:
-            if current_os == "Windows":
+            if os_type == "Windows":
                 subprocess.run(f'notepad.exe /p "{filename}"', shell=True, check=True)
-                print("✅Document successfully sent to print in Windows!")
-            elif current_os in ["Linux", "Darwin"]:
-                subprocess.run(["lp", filename], capture_output=True, text=True, check=True)
-                print("✅Document successfully sent to print queue in UNIX!")
-            else: print(f"⚠️Error: Operating system {current_os} is not supported for printing.")
-        except Exception as e: print(f"⚠️Failed to send to print: {e}")
-    else:
-        for_printing = False
-        get_weather(for_printing)
+            elif os_type in ["Linux", "Darwin"]:
+                subprocess.run(["lp", filename], check=True)
+            print("✅ Document successfully sent to printer!")
+        except Exception as e:
+            print(f"⚠️ Printing failed: {e}")
+    def run(self):
+        city = self.service.get_city_by_ip()
+        if not city:
+            print("⚠️ Could not determine location.")
+            return
+        data = self.service.fetch_forecast(city)
+        if not data: return
+        choice = input("Need to print the forecast? (No; Yes): ").strip().lower()
+        print("-" * 70)
+        if choice == "yes":
+            report = WeatherReport(data, for_printing=True)
+            self.send_to_printer(report)
+        else:
+            report = WeatherReport(data, for_printing=False)
+            report.print_all()
+if __name__ == "__main__":
+    App().run()
