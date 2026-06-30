@@ -3,10 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>My weather</title>
-    <!-- Подключение Favicon из папки static/images/ -->
     <link rel="shortcut icon" href="{{ url_for('static', filename='images/favicon.png') }}" type="image/png">
     
-    <!-- Профессиональное подключение CSS из файла static/css/style.css -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body class="{{ bg_class }}">
@@ -42,7 +40,6 @@
                 <tbody>
                     {% for hour in hourly %}
                     <tr>
-                        <!-- Фильтр |first на случай, если из Python пришел список после .split() -->
                         <td><strong>{{ hour.time | first if hour.time is iterable and hour.time is not string else hour.time }}</strong></td>
                         <td>{{ hour.temp }}°C</td>
                         <td>{{ hour.precipitation }}%</td>
