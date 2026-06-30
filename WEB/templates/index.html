@@ -3,10 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>My weather</title>
-    <!-- Подключение Favicon из папки static/images/ -->
     <link rel="shortcut icon" href="{{ url_for('static', filename='images/favicon.png') }}" type="image/png">
     
-    <!-- Профессиональное подключение CSS из файла static/css/style.css -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body class="{{ bg_class }}">
@@ -15,15 +13,32 @@
     <div class="time">Data for: {{ now }}</div>
 
     <form class="search-form" method="POST">
-        <input type="text" name="city" placeholder="Enter city (e.g., Paris)..." required>
+        <input type="text" name="city" placeholder="Enter city (e.g., Paris)..." {% if not needs_key %}required{% endif %}>
+        {% if not show_key_input and not needs_key and session.get('api_key') %}
+            <input type="hidden" name="api_key" value="{{ session.get('api_key') }}">
+        {% endif %}
         <button type="submit">Get Info</button>
     </form>
+
+    {% if show_key_input or needs_key %}
+        <div style="margin-top: -15px; margin-bottom: 25px; padding: 15px; background: #f0f2f5; border-radius: 8px;">
+            <label style="display: block; font-size: 14px; color: #65676b; font-weight: 600; margin-bottom: 8px;">
+                🔑 API Key Required:
+            </label>
+            <input type="password" name="api_key" placeholder="Enter your WeatherAPI Key here..." 
+                   style="width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 8px; font-size: 16px; box-sizing: border-box;"
+                   {% if needs_key %}required{% endif %}>
+            <small style="display: block; color: #65676b; font-size: 12px; margin-top: 5px;">
+                The key is missing in config.py. Enter it once to save in your session.
+            </small>
+        </div>
+    {% endif %}
 
     {% if error %}
         <p class="error">{{ error }}</p>
     {% endif %}
 
-    {% if weather %}
+    {% if weather and not needs_key %}
         <div class="weather-info">
             <h2>{{ weather.location.name }}, {{ weather.location.country }}</h2>
             <p><strong>🌡 Current Temperature:</strong> {{ weather.current.temp_c }}°C</p>
@@ -42,7 +57,6 @@
                 <tbody>
                     {% for hour in hourly %}
                     <tr>
-                        <!-- Фильтр |first на случай, если из Python пришел список после .split() -->
                         <td><strong>{{ hour.time | first if hour.time is iterable and hour.time is not string else hour.time }}</strong></td>
                         <td>{{ hour.temp }}°C</td>
                         <td>{{ hour.precipitation }}%</td>

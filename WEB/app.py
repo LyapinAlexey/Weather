@@ -2,11 +2,12 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from datetime import datetime
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, session
 from config import Config
 from services import WeatherService
 app = Flask(__name__)
 app.config.from_object(Config)
+app.secret_key = getattr(Config, "SECRET_KEY", "super-secret-weather-key")
 def determine_bg_class(condition_text: str) -> str:
     text = condition_text.lower()
     if any(word in text for word in ["clear", "sunny"]):
@@ -20,16 +21,33 @@ def determine_bg_class(condition_text: str) -> str:
     return "sunny"
 @app.route("/", methods=["GET", "POST"])
 def index():
-    city = request.form.get("city", "").strip() if request.method == "POST" else None
+    config_api_key = getattr(Config, "WEATHER_API_KEY", None)
+    if request.method == "POST":
+        city = request.form.get("city", "").strip()
+        user_api_key = request.form.get("api_key", "").strip()
+        if user_api_key:
+            session["api_key"] = user_api_key
+    else:
+        city = None
+    active_api_key = config_api_key or session.get("api_key")
+    if not active_api_key:
+        return render_template(
+            "index.html",
+            error="API key is missing. Please enter your WeatherAPI key below.",
+            bg_class="sunny",
+            now=datetime.now().strftime('%Y-%m-%d %H:%M'),
+            needs_key=True
+        )
     if not city:
-        city = WeatherService.get_city_by_ip()
-    data = WeatherService.get_weather(city)
+        city = WeatherService.get_city_by_ip() 
+    data = WeatherService.get_weather(city, api_key=active_api_key)
     if "error" in data:
         return render_template(
             "index.html", 
             error=data["error"], 
             bg_class="sunny", 
-            now=datetime.now().strftime('%Y-%m-%d %H:%M')
+            now=datetime.now().strftime('%Y-%m-%d %H:%M'),
+            show_key_input=not config_api_key
         )
     hourly_forecast = []
     api_localtime = datetime.strptime(data["location"]["localtime"], "%Y-%m-%d %H:%M")
@@ -68,7 +86,8 @@ def index():
         hourly=hourly_forecast,
         daily=daily_forecast,
         bg_class=bg_class,
-        now=datetime.now().strftime('%Y-%m-%d %H:%M')
+        now=datetime.now().strftime('%Y-%m-%d %H:%M'),
+        show_key_input=not config_api_key
     )
 if __name__ == "__main__":
     port = int(os.getenv("FLASK_PORT", 5001))
