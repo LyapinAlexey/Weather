@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>My weather</title>
     <link rel="shortcut icon" href="{{ url_for('static', filename='images/favicon.png') }}" type="image/png">
-    
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body class="{{ bg_class }}">
@@ -21,17 +20,20 @@
     </form>
 
     {% if show_key_input or needs_key %}
-        <div style="margin-top: -15px; margin-bottom: 25px; padding: 15px; background: #f0f2f5; border-radius: 8px;">
-            <label style="display: block; font-size: 14px; color: #65676b; font-weight: 600; margin-bottom: 8px;">
-                🔑 API Key Required:
-            </label>
-            <input type="password" name="api_key" placeholder="Enter your WeatherAPI Key here..." 
-                   style="width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 8px; font-size: 16px; box-sizing: border-box;"
-                   {% if needs_key %}required{% endif %}>
-            <small style="display: block; color: #65676b; font-size: 12px; margin-top: 5px;">
-                The key is missing in config.py. Enter it once to save in your session.
-            </small>
-        </div>
+        <form method="POST" action="" style="margin-top: -15px; margin-bottom: 25px;">
+            <div style="padding: 15px; background: #f0f2f5; border-radius: 8px;">
+                <label style="display: block; font-size: 14px; color: #65676b; font-weight: 600; margin-bottom: 8px;">
+                    🔑 API Key Required:
+                </label>
+                <input type="password" name="api_key" placeholder="Enter your WeatherAPI Key here..." 
+                       style="width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 8px; font-size: 16px; box-sizing: border-box;"
+                       {% if needs_key %}required{% endif %}>
+                <small style="display: block; color: #65676b; font-size: 12px; margin-top: 5px;">
+                    The key is missing in config.py. Enter it once to save in your session.
+                </small>
+            </div>
+            <button type="submit" style="display: none;"></button>
+        </form>
     {% endif %}
 
     {% if error %}

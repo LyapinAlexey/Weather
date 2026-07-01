@@ -2,7 +2,7 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from datetime import datetime
-from flask import Flask, render_template, request, session
+from flask import Flask, render_template, request, session, redirect, url_for
 from config import Config
 from services import WeatherService
 app = Flask(__name__)
@@ -22,11 +22,13 @@ def determine_bg_class(condition_text: str) -> str:
 @app.route("/", methods=["GET", "POST"])
 def index():
     config_api_key = getattr(Config, "WEATHER_API_KEY", None)
+
     if request.method == "POST":
         city = request.form.get("city", "").strip()
         user_api_key = request.form.get("api_key", "").strip()
         if user_api_key:
             session["api_key"] = user_api_key
+            return redirect(url_for("index"))
     else:
         city = None
     active_api_key = config_api_key or session.get("api_key")
@@ -40,14 +42,18 @@ def index():
         )
     if not city:
         city = WeatherService.get_city_by_ip() 
+        if not city:
+            city = "Moscow" 
     data = WeatherService.get_weather(city, api_key=active_api_key)
     if "error" in data:
+        if not config_api_key and "api_key" in session:
+            session.pop("api_key", None)
         return render_template(
             "index.html", 
-            error=data["error"], 
+            error=data["error"].get("message", "Invalid API Key or City not found."), 
             bg_class="sunny", 
             now=datetime.now().strftime('%Y-%m-%d %H:%M'),
-            show_key_input=not config_api_key
+            needs_key=not config_api_key
         )
     hourly_forecast = []
     api_localtime = datetime.strptime(data["location"]["localtime"], "%Y-%m-%d %H:%M")
