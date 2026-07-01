@@ -41,7 +41,8 @@ def index():
             needs_key=True
         )
     if not city:
-        city = WeatherService.get_city_by_ip() 
+        user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+        city = WeatherService.get_city_by_ip(user_ip) 
         if not city:
             city = "Moscow" 
     data = WeatherService.get_weather(city, api_key=active_api_key)
