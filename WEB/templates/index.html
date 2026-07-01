@@ -13,10 +13,7 @@
     <div class="time">Data for: {{ now }}</div>
 
     <form class="search-form" method="POST">
-        <input type="text" name="city" placeholder="Enter city (e.g., Paris)..." {% if not needs_key %}required{% endif %}>
-        {% if not show_key_input and not needs_key and session.get('api_key') %}
-            <input type="hidden" name="api_key" value="{{ session.get('api_key') }}">
-        {% endif %}
+        <input type="text" name="city" placeholder="Enter city (e.g., Paris)..." required>
         <button type="submit">Get Info</button>
     </form>
 
@@ -24,7 +21,7 @@
         <p class="error">{{ error }}</p>
     {% endif %}
 
-    {% if weather and not needs_key %}
+    {% if weather %}
         <div class="weather-info">
             <h2>{{ weather.location.name }}, {{ weather.location.country }}</h2>
             <p><strong>🌡 Current Temperature:</strong> {{ weather.current.temp_c }}°C</p>
