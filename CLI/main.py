@@ -24,14 +24,11 @@ class WeatherReport:
         uv = round(self.curr.get("uv", 0))
         p = round(self.curr.get("pressure_mb", 1013) * 0.750062)
         wind = self.curr.get("wind_kph", 0)
-        
-        # Safe fallback for rain chance
         pop = 0
         try:
             pop = self.data["forecast"]["forecastday"][0]["hour"][0].get("chance_of_rain", 0)
         except (KeyError, IndexError):
             pass
-
         tc = BLUE if t < -10 else CYAN if t < 0 else GREEN if t < 16 else YELLOW if t < 26 else RED
         uc = GREEN if uv <= 2 else YELLOW if uv <= 5 else ORANGE if uv <= 7 else RED
         pc = CYAN if p < 745 else GREEN if p <= 755 else YELLOW if p <= 765 else RED
