@@ -80,10 +80,10 @@ class Main:
     def run(self):
         srv = WeatherService()
         city = srv.get_city_by_ip()
-        print(f"📍 Location context: {city}")
+        print(f"[+] Location context: {city}")
         data = srv.get_weather(city)
         if "error" in data:
-            return print(f"⚠️ {data['error']}")
+            return print(f"[-] {data['error']}")
         print_req = input(" Need to print the forecast? (No; Yes): ").strip().lower() == "yes"
         print("-" * 70)
         report = WeatherReport(data, for_printing=print_req)
@@ -97,8 +97,8 @@ class Main:
         sys.stdout = orig
         try:
             subprocess.run(f'notepad.exe /p "{fn}"' if os_t == "Windows" else ["lp", fn], shell=(os_t == "Windows"), check=True)
-            print("✅ Document successfully printed!")
+            print("[+] Document successfully printed!")
         except Exception as e:
-            print(f"⚠️ Print spooler failed: {e}")
+            print(f"[-] Print spooler failed: {e}")
 if __name__ == "__main__":
     Main().run()
