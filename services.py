@@ -2,7 +2,6 @@ import logging
 import requests
 from config import Config
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class WeatherService:

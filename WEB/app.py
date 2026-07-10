@@ -1,13 +1,28 @@
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import logging
 from datetime import datetime
-from flask import Flask, render_template, request, session, redirect, url_for
+from flask import Flask, render_template, request, session, redirect, url_for, g
 from config import Config
+from logging_config import setup_logging
 from services import WeatherService
+from models import SessionLocal, WeatherRequest
+from schemas import CityRequestSchema
+
+setup_logging()
+logger = logging.getLogger(__name__)
+
 app = Flask(__name__)
 app.config.from_object(Config)
-app.secret_key = getattr(Config, "SECRET_KEY", "super-secret-weather-key")
+Config.validate()
+app.secret_key = Config.SECRET_KEY
+
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    db_session = g.pop('db_session', None)
+    if db_session is not None:
+        db_session.close()
 def determine_bg_class(condition_text: str) -> str:
     text = condition_text.lower()
     if any(word in text for word in ["clear", "sunny"]):
@@ -22,13 +37,32 @@ def determine_bg_class(condition_text: str) -> str:
 @app.route("/", methods=["GET", "POST"])
 def index():
     config_api_key = getattr(Config, "WEATHER_API_KEY", None)
-
+    if "db_session" not in g:
+        g.db_session =  SessionLocal()
+    db_validate = CityRequestSchema()
     if request.method == "POST":
         city = request.form.get("city", "").strip()
+        try:
+            db_validate.load(({"city": city}))
+        except Exception as e:
+            logger.error(f"Error while fetching city: city must be a string and between 1 and 100 characters. City isn't valide")
+            info_valide_err = WeatherRequest(city=city if len(city) <= 100 else city[:95] + "...",
+                                            source="web", success=0,
+                                            error_message="City must be a string and between 1 and 100 characters. City isn't valide")
+            g.db_session.add(info_valide_err)
+            g.db_session.commit()
+            return render_template(
+            "index.html",
+            error=f"Error while fetching city: city must be a string and between 1 and 100 characters. City isn't valide",
+            bg_class="sunny",
+            now=datetime.now().strftime('%Y-%m-%d %H:%M'),
+            needs_key=True if not config_api_key and not session.get("api_key") else False
+            )
+        """If you will do api-key validation:
         user_api_key = request.form.get("api_key", "").strip()
         if user_api_key:
             session["api_key"] = user_api_key
-            return redirect(url_for("index"))
+            return redirect(url_for("index"))"""
     else:
         city = None
     active_api_key = config_api_key or session.get("api_key")
@@ -47,6 +81,10 @@ def index():
             city = "Moscow" 
     data = WeatherService.get_weather(city, api_key=active_api_key)
     if "error" in data:
+        logger.warning(f"Weather request failed for city='{city}': {data['error'].get('message')}")
+        info_err = WeatherRequest(city=city, source="web", success=0, error_message=data["error"].get("message"))
+        g.db_session.add(info_err)
+        g.db_session.commit()
         if not config_api_key and "api_key" in session:
             session.pop("api_key", None)
         return render_template(
@@ -54,8 +92,16 @@ def index():
             error=data["error"].get("message", "Invalid API Key or City not found."), 
             bg_class="sunny", 
             now=datetime.now().strftime('%Y-%m-%d %H:%M'),
-            needs_key=not config_api_key
+            needs_key=not config_api_key    
         )
+    else:
+        try:
+            info_suc = WeatherRequest(city=city, source="web", temp_c=data["current"]["temp_c"],
+                                    condition=data["current"]["condition"]["text"], success=1, error_message=None)
+            g.db_session.add(info_suc)
+            g.db_session.commit()
+        finally:
+            g.db_session.close()
     hourly_forecast = []
     api_localtime = datetime.strptime(data["location"]["localtime"], "%Y-%m-%d %H:%M")
     current_hour_str = api_localtime.strftime("%Y-%m-%d %H:00")
@@ -64,7 +110,6 @@ def index():
     for hour in all_hours:
         if hour["time"] >= current_hour_str:
             prob_precip = max(hour.get("chance_of_rain", 0), hour.get("chance_of_snow", 0))
-            
             hourly_forecast.append({
                 "time": hour["time"].split(" ")[1],
                 "temp": hour["temp_c"],

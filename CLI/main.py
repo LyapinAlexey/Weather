@@ -1,11 +1,18 @@
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import logging
 from datetime import datetime
 import platform
 import subprocess
 from config import Config
+from logging_config import setup_logging
 from services import WeatherService
+from models import SessionLocal, WeatherRequest
+
+setup_logging()
+logger = logging.getLogger(__name__)
+
 RESET, BOLD, BLUE, CYAN, GREEN, YELLOW, RED, ORANGE = (
     "\033[0m", "\033[1m", "\033[34m", "\033[36m", "\033[32m", "\033[33m", "\033[31m", "\033[35m"
 )
@@ -78,12 +85,29 @@ class WeatherReport:
         print("-" * self.line_len)
 class Main:
     def run(self):
+        Config.validate()
+        db_session = SessionLocal()
         srv = WeatherService()
         city = srv.get_city_by_ip()
+        logger.info(f"Location resolved: {city}")
         print(f"[+] Location context: {city}")
         data = srv.get_weather(city)
         if "error" in data:
+            try:
+                info_err = WeatherRequest(city=city, source="cli", success=0, error_message=data["error"]["message"])
+                db_session.add(info_err)
+                db_session.commit()
+            finally:
+                db_session.close()
+            logger.error(f"Weather fetch failed: {data['error']}")
             return print(f"[-] {data['error']}")
+        try:
+            info_suc = WeatherRequest(city=city, source="cli", temp_c=data["current"]["temp_c"],
+                                      condition=data["current"]["condition"]["text"], success=1, error_message=None)
+            db_session.add(info_suc)
+            db_session.commit()
+        finally:
+            db_session.close()
         print_req = input(" Need to print the forecast? (No; Yes): ").strip().lower() == "yes"
         print("-" * 70)
         report = WeatherReport(data, for_printing=print_req)
