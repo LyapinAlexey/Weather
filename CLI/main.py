@@ -2,6 +2,7 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import logging
+import random
 from datetime import datetime
 import platform
 import subprocess
@@ -9,6 +10,8 @@ from config import Config
 from logging_config import setup_logging
 from services import WeatherService
 from models import SessionLocal, WeatherRequest
+from dbclear import clear
+
 setup_logging()
 logger = logging.getLogger(__name__)
 
@@ -111,6 +114,8 @@ class Main:
             db_session.commit()
         finally:
             db_session.close()
+        if random.random() < 0.01:
+            clear()
         print_req = input(" Need to print the forecast? (No; Yes): ").strip().lower() == "yes"
         print("-" * 70)
         report = WeatherReport(data, for_printing=print_req)

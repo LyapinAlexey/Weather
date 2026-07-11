@@ -2,12 +2,14 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import logging
+import random
 from datetime import datetime
 from flask import Flask, render_template, request, session, redirect, url_for, g
 from config import Config
 from logging_config import setup_logging
 from services import WeatherService
 from models import SessionLocal, WeatherRequest
+from dbclear import clear
 from schemas import CityRequestSchema
 from marshmallow import ValidationError
 
@@ -131,6 +133,8 @@ def index():
             "gust": round(day["day"].get("gust_kph", day["day"]["maxwind_kph"] * 1.2))
         })
     bg_class = determine_bg_class(data["current"]["condition"]["text"])
+    if random.random() < 0.01:
+        clear()
     return render_template(
         "index.html",
         weather=data,
