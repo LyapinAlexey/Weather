@@ -1,0 +1,24 @@
+name: Weather
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "WEATHER_API_KEY=${{ secrets.API_KEY }}" >> .env
+      - run: echo "FLASK_PORT=5001" >> .env
+      - run: echo "DATABASE_URL=postgresql://test_user:test_password@weather_db:5432/test_db" >> .env
+      - run: docker compose up -d
+        env:
+          WEATHER_API_KEY: ${{ secrets.API_KEY }}
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+          DATABASE_URL: postgresql://test_user:test_password@weather_db:5432/test_db
+      - run: sleep 10
+      - run: docker compose run --rm cli alembic upgrade head
+      - run: curl http://localhost:5001/

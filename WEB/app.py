@@ -5,6 +5,8 @@ import logging
 import random
 from datetime import datetime
 from flask import Flask, render_template, request, session, redirect, url_for, g
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from config import Config
 from logging_config import setup_logging
 from services import WeatherService
@@ -17,6 +19,10 @@ setup_logging()
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+limiter = Limiter(
+    key_func=get_remote_address,
+    app=app,
+)
 app.config.from_object(Config)
 Config.validate()
 schema = CityRequestSchema()
@@ -39,6 +45,7 @@ def determine_bg_class(condition_text: str) -> str:
         return "thunder"
     return "sunny"
 @app.route("/", methods=["GET", "POST"])
+@limiter.limit("25 per minute") # Limit to 25 requests per minute per IP x 4 workers = 100 requests per minute
 def index():
     config_api_key = getattr(Config, "WEATHER_API_KEY", None)
     if "db_session" not in g:
@@ -147,4 +154,3 @@ def index():
 if __name__ == "__main__":
     port = int(os.getenv("FLASK_PORT", 5001))
     app.run(host="0.0.0.0", port=port)
-
