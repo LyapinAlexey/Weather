@@ -9,6 +9,7 @@ from logging_config import setup_logging
 from services import WeatherService
 from models import SessionLocal, WeatherRequest
 from schemas import CityRequestSchema
+from marshmallow import ValidationError
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -16,6 +17,7 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.config.from_object(Config)
 Config.validate()
+schema = CityRequestSchema()
 app.secret_key = Config.SECRET_KEY
 
 @app.teardown_appcontext
@@ -39,21 +41,21 @@ def index():
     config_api_key = getattr(Config, "WEATHER_API_KEY", None)
     if "db_session" not in g:
         g.db_session =  SessionLocal()
-    db_validate = CityRequestSchema()
     if request.method == "POST":
         city = request.form.get("city", "").strip()
         try:
-            db_validate.load(({"city": city}))
-        except Exception as e:
-            logger.error(f"Error while fetching city: city must be a string and between 1 and 100 characters. City isn't valide")
+            schema.load({"city": city})
+        except ValidationError:
+            error = "Error while fetching city: city must be a string and between 1 and 100 characters. City isn't valid"
+            logger.error(error)
             info_valide_err = WeatherRequest(city=city if len(city) <= 100 else city[:95] + "...",
                                             source="web", success=0,
-                                            error_message="City must be a string and between 1 and 100 characters. City isn't valide")
+                                            error_message=error)
             g.db_session.add(info_valide_err)
             g.db_session.commit()
             return render_template(
             "index.html",
-            error=f"Error while fetching city: city must be a string and between 1 and 100 characters. City isn't valide",
+            error=error,
             bg_class="sunny",
             now=datetime.now().strftime('%Y-%m-%d %H:%M'),
             needs_key=True if not config_api_key and not session.get("api_key") else False
@@ -95,13 +97,10 @@ def index():
             needs_key=not config_api_key    
         )
     else:
-        try:
-            info_suc = WeatherRequest(city=city, source="web", temp_c=data["current"]["temp_c"],
-                                    condition=data["current"]["condition"]["text"], success=1, error_message=None)
-            g.db_session.add(info_suc)
-            g.db_session.commit()
-        finally:
-            g.db_session.close()
+        info_suc = WeatherRequest(city=city, source="web", temp_c=data["current"]["temp_c"],
+                                condition=data["current"]["condition"]["text"], success=1, error_message=None)
+        g.db_session.add(info_suc)
+        g.db_session.commit()
     hourly_forecast = []
     api_localtime = datetime.strptime(data["location"]["localtime"], "%Y-%m-%d %H:%M")
     current_hour_str = api_localtime.strftime("%Y-%m-%d %H:00")

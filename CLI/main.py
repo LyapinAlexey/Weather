@@ -9,7 +9,6 @@ from config import Config
 from logging_config import setup_logging
 from services import WeatherService
 from models import SessionLocal, WeatherRequest
-
 setup_logging()
 logger = logging.getLogger(__name__)
 
@@ -88,7 +87,11 @@ class Main:
         Config.validate()
         db_session = SessionLocal()
         srv = WeatherService()
-        city = srv.get_city_by_ip()
+        try:
+            city = srv.get_city_by_ip()
+        except Exception as e:
+            logger.warning(f"Failed to resolve city by IP: {e}")
+            city = "Moscow"
         logger.info(f"Location resolved: {city}")
         print(f"[+] Location context: {city}")
         data = srv.get_weather(city)
