@@ -13,4 +13,4 @@ COPY WEB/static /app/static
 COPY WEB/templates /app/templates
 COPY alembic /app/alembic
 COPY alembic.ini /app
-CMD ["gunicorn", "app:app", "-b", "0.0.0.0:5001"]   
+CMD ["gunicorn", "app:app", "-w", "4", "-b", "0.0.0.0:5001"]   
