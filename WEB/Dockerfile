@@ -11,6 +11,6 @@ COPY schemas.py /app
 COPY WEB/app.py /app
 COPY WEB/static /app/static
 COPY WEB/templates /app/templates
-COPY alembic /app
+COPY alembic /app/alembic
 COPY alembic.ini /app
 CMD ["gunicorn", "app:app", "-b", "0.0.0.0:5001"]   

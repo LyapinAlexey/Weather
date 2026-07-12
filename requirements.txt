@@ -3,7 +3,7 @@ requests==2.32.3
 python-dotenv==1.0.1
 gunicorn==22.0.0
 SQLAlchemy==2.0.35
-psycopg2-binary==2.9.9
+psycopg2-binary==2.9.12
 alembic==1.13.3
 marshmallow==3.22.0
 pytest==9.1.1

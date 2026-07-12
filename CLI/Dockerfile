@@ -9,6 +9,6 @@ COPY dbclear.py /main
 COPY logging_config.py /main
 COPY schemas.py /main
 COPY CLI/main.py /main
-COPY alembic /main
+COPY alembic /main/alembic
 COPY alembic.ini /main
-CMD ["python", "main/main.py"]   
+CMD ["python", "main.py"]   
