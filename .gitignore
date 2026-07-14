@@ -10,8 +10,10 @@ env/
 # Python compilier
 __pycache__/
 *.pyc
+.pytest_cache/
 
 # System files
 .DS_Store
 Thumbs.db
 CLI/weather_report.txt
+.vscode/

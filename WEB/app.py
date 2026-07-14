@@ -45,7 +45,7 @@ def determine_bg_class(condition_text: str) -> str:
         return "thunder"
     return "sunny"
 @app.route("/", methods=["GET", "POST"])
-@limiter.limit("60 per minute")
+@limiter.limit("25 per minute") # Limit to 25 requests per minute per IP x 4 workers = 100 requests per minute
 def index():
     config_api_key = getattr(Config, "WEATHER_API_KEY", None)
     if "db_session" not in g:
@@ -154,4 +154,3 @@ def index():
 if __name__ == "__main__":
     port = int(os.getenv("FLASK_PORT", 5001))
     app.run(host="0.0.0.0", port=port)
-
