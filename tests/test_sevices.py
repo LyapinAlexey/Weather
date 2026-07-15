@@ -17,7 +17,7 @@ class TestWeatherService(unittest.TestCase):
         city = WeatherService.get_city_by_ip("8.8.8.8")
         assert city == "Berlin"
         assert mock_get.call_count == 1
-    @patch("services.requests.get")
+    @patch("services.requests.get") 
     def test_ip_localhost_returns_moscow(self, mock_get):
         city = WeatherService.get_city_by_ip("127.0.0.1")
         assert city == "Moscow"
