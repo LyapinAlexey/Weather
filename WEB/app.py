@@ -11,6 +11,7 @@ from config import Config
 from logging_config import setup_logging
 from services import WeatherService
 from models import SessionLocal, WeatherRequest
+from bg_class import determine_bg_class
 from dbclear import clear
 from schemas import CityRequestSchema
 from marshmallow import ValidationError
@@ -22,6 +23,7 @@ app = Flask(__name__)
 limiter = Limiter(
     key_func=get_remote_address,
     app=app,
+    storage_uri="memory://",
 )
 app.config.from_object(Config)
 Config.validate()
@@ -33,17 +35,6 @@ def shutdown_session(exception=None):
     db_session = g.pop('db_session', None)
     if db_session is not None:
         db_session.close()
-def determine_bg_class(condition_text: str) -> str:
-    text = condition_text.lower()
-    if any(word in text for word in ["clear", "sunny"]):
-        return "sunny"
-    if "rain" in text:
-        return "rainy"
-    if "cloud" in text:
-        return "cloudy"
-    if "thunder" in text:
-        return "thunder"
-    return "sunny"
 @app.route("/", methods=["GET", "POST"])
 @limiter.limit("25 per minute") # Limit to 25 requests per minute per IP x 4 workers = 100 requests per minute
 def index():
