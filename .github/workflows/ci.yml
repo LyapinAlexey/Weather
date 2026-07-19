@@ -19,6 +19,9 @@ jobs:
           POSTGRES_PASSWORD: test_password
           POSTGRES_DB: test_db
           DATABASE_URL: postgresql://test_user:test_password@weather_db:5432/test_db
-      - run: sleep 10
+      - run: sleep 15
       - run: docker compose run --rm cli alembic upgrade head
+      - name: Check Docker Logs
+        run: docker compose logs
+        if: always() 
       - run: curl http://localhost:5001/
