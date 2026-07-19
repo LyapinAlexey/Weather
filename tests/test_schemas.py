@@ -5,8 +5,8 @@ from marshmallow import ValidationError
 class TestSchemas:
     def test_valid_city(self):
         schema = CityRequestSchema()
-        res = schema.load({"city": "Moskow"})
-        assert res["city"] == "Moskow"
+        res = schema.load({"city": "Berlin"})
+        assert res["city"] == "Berlin"
     def test_city_min_length_boundary(self):
         schema = CityRequestSchema()
         res = schema.load({"city": "a"})
