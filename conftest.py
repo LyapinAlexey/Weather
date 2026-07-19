@@ -3,19 +3,21 @@ import os
 from WEB import app as flask_app
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import WeatherRequest
+from models import WeatherRequest, Base
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
 @pytest.fixture
 def db_session():
     engine = create_engine(TEST_DATABASE_URL)
+    Base.metadata.create_all(bind=engine)
     connection = engine.connect()
     transaction = connection.begin()
     TestSessionLocal = sessionmaker(bind=connection)
     session = TestSessionLocal()
     yield session
     session.close()
-    transaction.rollback()
+    if transaction.is_active:
+        transaction.rollback()
     connection.close()
 @pytest.fixture
 def client():
