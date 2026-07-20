@@ -19,9 +19,30 @@ jobs:
           POSTGRES_PASSWORD: test_password
           POSTGRES_DB: test_db
           DATABASE_URL: postgresql://test_user:test_password@weather_db:5432/test_db
-      - run: sleep 15
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          echo "⏳ Waiting for PostgreSQL..."
+          until docker compose exec -T weather_db pg_isready -U test_user -d test_db; do
+            echo "Database is starting up, retrying in 2 seconds..."
+            sleep 2
+          done
+          echo "✅ PostgreSQL is ready for use!"
       - run: docker compose run --rm cli alembic upgrade head
+      - name: Wait for server and test endpoint
+        run: |
+          echo "⏱️ Waiting for port 5001 to respond..."
+          for i in {1..15}; do
+            if curl -s http://localhost:5001/ > /dev/null; then
+              echo "✅ Server responded successfully!"
+              curl -v http://localhost:5001/
+              exit 0
+            fi
+            echo "Attempt $i: server is sleeping, waiting..."
+            sleep 2
+          done
+          echo "❌ Error: Server failed to start."
+          docker compose logs
+          exit 1
       - name: Check Docker Logs
         run: docker compose logs
-        if: always() 
-      - run: curl http://localhost:5001/
+        if: always()
