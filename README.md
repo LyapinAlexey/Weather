@@ -1,3 +1,70 @@
-Weather channel
-Requests - python -m pip install requests
-If you need WEB - python -m pip install flask
+# Weather
+
+Production-grade weather application with a Flask web interface and CLI tool, built as a portfolio project demonstrating real-world engineering practices.
+
+![CI](https://github.com/LyapinAlexey/Weather/actions/workflows/ci.yml/badge.svg)
+
+## Features
+
+- 🌦 Current weather + 3-day forecast via [WeatherAPI](https://www.weatherapi.com/)
+- 🖥 Web interface (Flask) and CLI tool, sharing a common service/model layer
+- 📍 Automatic city detection by IP (with fallback chain: ip-api.com → ipinfo.io)
+- 🗄 PostgreSQL persistence via SQLAlchemy + Alembic migrations
+- ✅ Input validation with Marshmallow
+- 🚦 Rate limiting (flask-limiter)
+- 🐳 Fully containerized with Docker Compose
+- 🔄 CI pipeline via GitHub Actions (build, migrate, health check)
+- 🧪 34+ automated tests (pytest): unit, mocked service, Flask route, and real PostgreSQL integration tests
+
+## Tech Stack
+
+**Backend:** Python, Flask, gunicorn, SQLAlchemy, Alembic, Marshmallow, flask-limiter
+**Database:** PostgreSQL
+**Infra:** Docker, Docker Compose, GitHub Actions
+**Testing:** pytest, unittest.mock
+
+## Quick Start (Docker)
+
+1. Clone the repo and copy the environment template:
+```bash
+   cp .env.example .env
+```
+2. Fill in `.env` — at minimum you'll need a free API key from [weatherapi.com](https://www.weatherapi.com/) (`WEATHER_API_KEY`) and a `SECRET_KEY`:
+```bash
+   python -c "import secrets; print(secrets.token_hex(32))"
+```
+3. Start the stack:
+```bash
+   docker compose up -d
+   docker compose run --rm cli alembic upgrade head
+```
+4. Open [http://localhost:5001](http://localhost:5001)
+
+## Running the CLI
+
+```bash
+docker compose run --rm cli python main.py
+```
+
+## Running Tests
+
+Tests require a dedicated PostgreSQL test container (kept separate from the dev/prod database):
+
+```bash
+docker compose up -d weather_test_db
+DATABASE_URL="postgresql://test_user:test_password@localhost:5433/test_weather_db" alembic upgrade head
+pytest -v
+```
+
+## Project Structure
+
+Weather/
+├── WEB/ # Flask web app
+├── CLI/ # CLI tool
+├── tests/ # pytest suite
+├── alembic/ # DB migrations
+├── schemas.py # Marshmallow validation
+├── services.py # Shared weather/geo service layer
+├── models.py # SQLAlchemy models
+├── config.py # Env-based configuration
+└── docker-compose.yml
