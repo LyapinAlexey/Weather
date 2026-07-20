@@ -3,6 +3,8 @@
 Production-grade weather application with a Flask web interface and CLI tool, built as a portfolio project demonstrating real-world engineering practices.
 
 ![CI](https://github.com/LyapinAlexey/Weather/actions/workflows/ci.yml/badge.svg)
+![Python](https://img.shields.io/badge/python-3.13-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
 
 ## Features
 
@@ -57,7 +59,7 @@ pytest -v
 ```
 
 ## Project Structure
-
+```text
 Weather/
 ├── WEB/ # Flask web app
 ├── CLI/ # CLI tool
@@ -68,3 +70,4 @@ Weather/
 ├── models.py # SQLAlchemy models
 ├── config.py # Env-based configuration
 └── docker-compose.yml
+```
