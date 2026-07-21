@@ -1,6 +1,8 @@
 from datetime import datetime
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime
-from sqlalchemy.orm import sessionmaker, declarative_base
+
+from sqlalchemy import Column, DateTime, Float, Integer, String, create_engine
+from sqlalchemy.orm import declarative_base, sessionmaker
+
 from config import Config
 
 engine = create_engine(Config.DATABASE_URL)
@@ -10,7 +12,7 @@ Base = declarative_base()
 
 class WeatherRequest(Base):
     __tablename__ = "weather_requests"
-    
+
     id = Column(Integer, primary_key=True)
     city = Column(String(100), nullable=False)
     source = Column(String(10), nullable=False)

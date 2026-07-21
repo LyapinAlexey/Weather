@@ -1,20 +1,23 @@
 import os
 import sys
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import logging
 import random
 from datetime import datetime
-from flask import Flask, render_template, request, session, redirect, url_for, g
+
+from flask import Flask, g, render_template, request, session
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from config import Config
-from logging_config import setup_logging
-from services import WeatherService
-from models import SessionLocal, WeatherRequest
-from bg_class import determine_bg_class
-from dbclear import clear
-from schemas import CityRequestSchema
 from marshmallow import ValidationError
+
+from bg_class import determine_bg_class
+from config import Config
+from dbclear import clear
+from logging_config import setup_logging
+from models import SessionLocal, WeatherRequest
+from schemas import CityRequestSchema
+from services import WeatherService
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -30,17 +33,22 @@ Config.validate()
 schema = CityRequestSchema()
 app.secret_key = Config.SECRET_KEY
 
+
 @app.teardown_appcontext
 def shutdown_session(exception=None):
-    db_session = g.pop('db_session', None)
+    db_session = g.pop("db_session", None)
     if db_session is not None:
         db_session.close()
+
+
 @app.route("/", methods=["GET", "POST"])
-@limiter.limit("25 per minute") # Limit to 25 requests per minute per IP x 4 workers = 100 requests per minute
+@limiter.limit(
+    "25 per minute"
+)  # Limit to 25 requests per minute per IP x 4 workers = 100 requests per minute
 def index():
     config_api_key = getattr(Config, "WEATHER_API_KEY", None)
     if "db_session" not in g:
-        g.db_session =  SessionLocal()
+        g.db_session = SessionLocal()
     if request.method == "POST":
         city = request.form.get("city", "").strip()
         try:
@@ -48,17 +56,22 @@ def index():
         except ValidationError:
             error = "Error while fetching city: city must be a string and between 1 and 100 characters. City isn't valid"
             logger.error(error)
-            info_valide_err = WeatherRequest(city=city if len(city) <= 100 else city[:95] + "...",
-                                            source="web", success=0,
-                                            error_message=error)
+            info_valide_err = WeatherRequest(
+                city=city if len(city) <= 100 else city[:95] + "...",
+                source="web",
+                success=0,
+                error_message=error,
+            )
             g.db_session.add(info_valide_err)
             g.db_session.commit()
             return render_template(
-            "index.html",
-            error=error,
-            bg_class="sunny",
-            now=datetime.now().strftime('%Y-%m-%d %H:%M'),
-            needs_key=True if not config_api_key and not session.get("api_key") else False
+                "index.html",
+                error=error,
+                bg_class="sunny",
+                now=datetime.now().strftime("%Y-%m-%d %H:%M"),
+                needs_key=(
+                    True if not config_api_key and not session.get("api_key") else False
+                ),
             )
         """If you will do api-key validation:
         user_api_key = request.form.get("api_key", "").strip()
@@ -73,63 +86,86 @@ def index():
             "index.html",
             error="API key is missing. Please enter your WeatherAPI key below.",
             bg_class="sunny",
-            now=datetime.now().strftime('%Y-%m-%d %H:%M'),
-            needs_key=True
+            now=datetime.now().strftime("%Y-%m-%d %H:%M"),
+            needs_key=True,
         )
     if not city:
-        user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-        city = WeatherService.get_city_by_ip(user_ip) 
+        user_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+        city = WeatherService.get_city_by_ip(user_ip)
         if not city:
-            city = "Moscow" 
+            city = "Moscow"
     data = WeatherService.get_weather(city, api_key=active_api_key)
     if "error" in data:
-        logger.warning(f"Weather request failed for city='{city}': {data['error'].get('message')}")
-        info_err = WeatherRequest(city=city, source="web", success=0, error_message=data["error"].get("message"))
+        logger.warning(
+            f"Weather request failed for city='{city}': {data['error'].get('message')}"
+        )
+        info_err = WeatherRequest(
+            city=city,
+            source="web",
+            success=0,
+            error_message=data["error"].get("message"),
+        )
         g.db_session.add(info_err)
         g.db_session.commit()
         if not config_api_key and "api_key" in session:
             session.pop("api_key", None)
         return render_template(
-            "index.html", 
-            error=data["error"].get("message", "Invalid API Key or City not found."), 
-            bg_class="sunny", 
-            now=datetime.now().strftime('%Y-%m-%d %H:%M'),
-            needs_key=not config_api_key    
+            "index.html",
+            error=data["error"].get("message", "Invalid API Key or City not found."),
+            bg_class="sunny",
+            now=datetime.now().strftime("%Y-%m-%d %H:%M"),
+            needs_key=not config_api_key,
         )
     else:
-        info_suc = WeatherRequest(city=city, source="web", temp_c=data["current"]["temp_c"],
-                                condition=data["current"]["condition"]["text"], success=1, error_message=None)
+        info_suc = WeatherRequest(
+            city=city,
+            source="web",
+            temp_c=data["current"]["temp_c"],
+            condition=data["current"]["condition"]["text"],
+            success=1,
+            error_message=None,
+        )
         g.db_session.add(info_suc)
         g.db_session.commit()
     hourly_forecast = []
     api_localtime = datetime.strptime(data["location"]["localtime"], "%Y-%m-%d %H:%M")
     current_hour_str = api_localtime.strftime("%Y-%m-%d %H:00")
-    all_hours = [hour for day in data["forecast"]["forecastday"] for hour in day["hour"]]
+    all_hours = [
+        hour for day in data["forecast"]["forecastday"] for hour in day["hour"]
+    ]
     count = 0
     for hour in all_hours:
         if hour["time"] >= current_hour_str:
-            prob_precip = max(hour.get("chance_of_rain", 0), hour.get("chance_of_snow", 0))
-            hourly_forecast.append({
-                "time": hour["time"].split(" ")[1],
-                "temp": hour["temp_c"],
-                "precipitation": prob_precip,
-                "uv": round(hour["uv"]),
-                "pressure": round(hour["pressure_mb"] * 0.750062) 
-            })
+            prob_precip = max(
+                hour.get("chance_of_rain", 0), hour.get("chance_of_snow", 0)
+            )
+            hourly_forecast.append(
+                {
+                    "time": hour["time"].split(" ")[1],
+                    "temp": hour["temp_c"],
+                    "precipitation": prob_precip,
+                    "uv": round(hour["uv"]),
+                    "pressure": round(hour["pressure_mb"] * 0.750062),
+                }
+            )
             count += 1
             if count == 24:
                 break
     daily_forecast = []
     for day in data["forecast"]["forecastday"]:
         d_obj = datetime.strptime(day["date"], "%Y-%m-%d")
-        daily_forecast.append({
-            "date": d_obj.strftime("%d.%m.%Y"),
-            "temp": day["day"]["avgtemp_c"],
-            "precipitation": day["day"]["totalprecip_mm"],
-            "uv": round(day["day"]["uv"]),
-            "wind": day["day"]["maxwind_kph"],
-            "gust": round(day["day"].get("gust_kph", day["day"]["maxwind_kph"] * 1.2))
-        })
+        daily_forecast.append(
+            {
+                "date": d_obj.strftime("%d.%m.%Y"),
+                "temp": day["day"]["avgtemp_c"],
+                "precipitation": day["day"]["totalprecip_mm"],
+                "uv": round(day["day"]["uv"]),
+                "wind": day["day"]["maxwind_kph"],
+                "gust": round(
+                    day["day"].get("gust_kph", day["day"]["maxwind_kph"] * 1.2)
+                ),
+            }
+        )
     bg_class = determine_bg_class(data["current"]["condition"]["text"])
     if random.random() < 0.01:
         clear()
@@ -139,9 +175,11 @@ def index():
         hourly=hourly_forecast,
         daily=daily_forecast,
         bg_class=bg_class,
-        now=datetime.now().strftime('%Y-%m-%d %H:%M'),
-        show_key_input=not config_api_key
+        now=datetime.now().strftime("%Y-%m-%d %H:%M"),
+        show_key_input=not config_api_key,
     )
+
+
 if __name__ == "__main__":
     port = int(os.getenv("FLASK_PORT", 5001))
     app.run(host="0.0.0.0", port=port)

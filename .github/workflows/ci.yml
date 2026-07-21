@@ -36,7 +36,7 @@ jobs:
           done
           echo "[+] PostgreSQL is ready for use!"
       - name: Wait for test PostgreSQL
-        run: | 
+        run: |
           echo "[?] Waiting for PostgreSQL..."
           until docker compose exec -T weather_test_db pg_isready -U test_user -d test_weather_db; do
             echo "[+] Database is starting up, retrying in 2 seconds..."

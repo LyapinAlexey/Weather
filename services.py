@@ -1,8 +1,11 @@
 import logging
+
 import requests
+
 from config import Config
 
 logger = logging.getLogger(__name__)
+
 
 class WeatherService:
     @staticmethod
@@ -27,39 +30,60 @@ class WeatherService:
                     return data.get("city")
         except Exception as e:
             logger.error(f"Ipinfo Error: {e}")
-        return "London" #default city if all else fails
+        return "London"  # default city if all else fails
+
     @staticmethod
     def get_weather(city: str, api_key: str = None) -> dict:
         active_key = api_key or getattr(Config, "WEATHER_API_KEY", None)
         if not active_key:
-            return {"error": {"message": "API key is missing. Please provide a valid WeatherAPI key."}}
+            return {
+                "error": {
+                    "message": "API key is missing. Please provide a valid WeatherAPI key."
+                }
+            }
         params = {
             "key": active_key,
             "q": city,
             "days": 3,
             "aqi": "yes",
             "alerts": "no",
-            "lang": "en"
+            "lang": "en",
         }
         try:
             response = requests.get(Config.WEATHER_URL, params=params, timeout=5)
             if response.status_code in [401, 403]:
-                return {"error": {"message": "Invalid API key. Please check your key and try again."}}
+                return {
+                    "error": {
+                        "message": "Invalid API key. Please check your key and try again."
+                    }
+                }
             if response.status_code == 400:
                 return {"error": {"message": f"City '{city}' not found."}}
             if "application/json" not in response.headers.get("Content-Type", ""):
                 return {
                     "error": {
                         "message": f"API returned invalid response format (Status: {response.status_code}). "
-                                   f"Perhaps access is blocked. Please enable or change your VPN location!"
+                        f"Perhaps access is blocked. Please enable or change your VPN location!"
                     }
                 }
             if response.status_code != 200:
-                return {"error": {"message": f"Weather service error. Status code: {response.status_code}"}}
+                return {
+                    "error": {
+                        "message": f"Weather service error. Status code: {response.status_code}"
+                    }
+                }
             try:
                 return response.json()
             except ValueError:
-                return {"error": {"message": "Error parsing response from server. Please check your internet connection."}}
+                return {
+                    "error": {
+                        "message": "Error parsing response from server. Please check your internet connection."
+                    }
+                }
         except requests.RequestException as e:
             logger.error(f"Network error while fetching weather for {city}: {e}")
-            return {"error": {"message": "Network error. Look up your internet connection or try again later."}}
+            return {
+                "error": {
+                    "message": "Network error. Look up your internet connection or try again later."
+                }
+            }
