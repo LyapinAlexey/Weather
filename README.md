@@ -21,24 +21,12 @@ Production-grade weather application with a Flask web interface and CLI tool, bu
 - 🔄 CI pipeline via GitHub Actions (build, migrate, health check)
 - 🧪 34+ automated tests (pytest): unit, mocked service, Flask route, and real PostgreSQL integration tests
 
-## Tech Stack
+### Tech Stack
 
-**Backend:**
-![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)
-![Flask](https://img.shields.io/badge/Flask-000000?style=flat-square&logo=flask&logoColor=white)
-![Gunicorn](https://img.shields.io/badge/Gunicorn-499848?style=flat-square&logo=gunicorn&logoColor=white)
-![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-D71F00?style=flat-square&logo=sqlalchemy&logoColor=white)
-![Alembic](https://img.shields.io/badge/Alembic-000000?style=flat-square&logo=alembic&logoColor=white)
-
-**Database:**
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white)
-
-**DevOps & Infra:**
-![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)
-![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white)
-
-**Testing:**
-![Pytest](https://img.shields.io/badge/Pytest-0A9EDC?style=flat-square&logo=pytest&logoColor=white)
+- **Backend:** `Python 3.13`, `Flask`, `Gunicorn`, `SQLAlchemy`, `Alembic`, `Marshmallow`, `Flask-Limiter`
+- **Database:** `PostgreSQL`
+- **Infrastructure & DevOps:** `Docker`, `Docker Compose`, `GitHub Actions (CI/CD)`
+- **Testing & Quality:** `Pytest`, `unittest.mock`, `Codecov`
 
 ## Quick Start (Docker)
 
