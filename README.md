@@ -23,10 +23,22 @@ Production-grade weather application with a Flask web interface and CLI tool, bu
 
 ## Tech Stack
 
-**Backend:** Python, Flask, gunicorn, SQLAlchemy, Alembic, Marshmallow, flask-limiter
-**Database:** PostgreSQL
-**Infra:** Docker, Docker Compose, GitHub Actions
-**Testing:** pytest, unittest.mock
+**Backend:**
+![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)
+![Flask](https://img.shields.io/badge/Flask-000000?style=flat-square&logo=flask&logoColor=white)
+![Gunicorn](https://img.shields.io/badge/Gunicorn-499848?style=flat-square&logo=gunicorn&logoColor=white)
+![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-D71F00?style=flat-square&logo=sqlalchemy&logoColor=white)
+![Alembic](https://img.shields.io/badge/Alembic-000000?style=flat-square&logo=alembic&logoColor=white)
+
+**Database:**
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white)
+
+**DevOps & Infra:**
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white)
+
+**Testing:**
+![Pytest](https://img.shields.io/badge/Pytest-0A9EDC?style=flat-square&logo=pytest&logoColor=white)
 
 ## Quick Start (Docker)
 
