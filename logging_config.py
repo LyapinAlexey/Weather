@@ -1,6 +1,7 @@
 import logging
 import os
 
+
 def setup_logging():
     """Configure root logging for the whole application.
     Call this once, at application startup (WEB and CLI entry points)."""

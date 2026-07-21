@@ -14,4 +14,4 @@ COPY WEB/templates /app/templates
 COPY alembic /app/alembic
 COPY alembic.ini /app
 COPY bg_class.py /app
-CMD ["gunicorn", "app:app", "-w", "4", "-b", "0.0.0.0:5001"]   
+CMD ["gunicorn", "app:app", "-w", "4", "-b", "0.0.0.0:5001"]

@@ -1,11 +1,15 @@
-import pytest
 import os
-from WEB import app as flask_app
+
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import WeatherRequest, Base
+
+from models import Base
+from WEB import app as flask_app
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
+
+
 @pytest.fixture
 def db_session():
     engine = create_engine(TEST_DATABASE_URL)
@@ -19,19 +23,23 @@ def db_session():
     if transaction.is_active:
         transaction.rollback()
     connection.close()
+
+
 @pytest.fixture
 def client():
     flask_app.config["TESTING"] = True
     with flask_app.test_client() as client:
         yield client
+
+
 @pytest.fixture
 def fake_weather_response() -> dict:
     return {
         "location": {
             "localtime": "2026-07-16 12:00",
-                "name": "Berlin",
-                "country": "Germany",
-                },
+            "name": "Berlin",
+            "country": "Germany",
+        },
         "current": {
             "temp_c": 20,
             "condition": {"text": "Sunny"},
@@ -56,10 +64,10 @@ def fake_weather_response() -> dict:
                             "chance_of_rain": 0,
                             "chance_of_snow": 0,
                             "uv": 5,
-                            "pressure_mb": 1013
+                            "pressure_mb": 1013,
                         }
-                    ]
+                    ],
                 }
             ]
-        }
+        },
     }

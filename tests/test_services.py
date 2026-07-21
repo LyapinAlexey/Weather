@@ -1,7 +1,10 @@
-import requests
 import unittest
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
+
+import requests
+
 from services import WeatherService
+
 
 class TestGetCityByIp(unittest.TestCase):
     @patch("services.requests.get")
@@ -9,6 +12,7 @@ class TestGetCityByIp(unittest.TestCase):
         city = WeatherService.get_city_by_ip(None)
         assert city == "London"
         mock_get.assert_not_called()
+
     @patch("services.requests.get")
     def test_ip_geo_success_from_ip_api(self, mock_get):
         mock_response = Mock(status_code=200)
@@ -17,11 +21,13 @@ class TestGetCityByIp(unittest.TestCase):
         city = WeatherService.get_city_by_ip("8.8.8.8")
         assert city == "Berlin"
         assert mock_get.call_count == 1
-    @patch("services.requests.get") 
+
+    @patch("services.requests.get")
     def test_ip_localhost_returns_moscow(self, mock_get):
         city = WeatherService.get_city_by_ip("127.0.0.1")
         assert city == "London"
         mock_get.assert_not_called()
+
     @patch("services.requests.get")
     def test_ip_geo_falls_back_to_ipinfo_on_ipapi_fail(self, mock_get):
         mock_ipapi_fail = Mock(status_code=400)
@@ -31,6 +37,7 @@ class TestGetCityByIp(unittest.TestCase):
         city = WeatherService.get_city_by_ip("8.8.8.8")
         assert city == "London"
         assert mock_get.call_count == 2
+
     @patch("services.requests.get")
     def test_ip_geo_returns_default_moscow_when_all_fail(self, mock_get):
         mock_ipapi_fail = Mock(status_code=500)
@@ -40,6 +47,7 @@ class TestGetCityByIp(unittest.TestCase):
         city = WeatherService.get_city_by_ip("8.8.8.8")
         assert city == "London"
         assert mock_get.call_count == 2
+
     @patch("services.requests.get")
     def test_ip_geo_falls_back_to_ipinfo_on_exception(self, mock_get):
         ipapi_err = requests.RequestException("Connection lost")
@@ -49,6 +57,8 @@ class TestGetCityByIp(unittest.TestCase):
         city = WeatherService.get_city_by_ip("8.8.8.8")
         assert city == "London"
         assert mock_get.call_count == 2
+
+
 class TestGetWeather(unittest.TestCase):
     @patch("services.requests.get")
     @patch("services.Config")
@@ -57,6 +67,7 @@ class TestGetWeather(unittest.TestCase):
         res = WeatherService.get_weather("London", api_key=None)
         assert "API key" in res["error"]["message"]
         mock_get.assert_not_called()
+
     @patch("services.requests.get")
     def test_weather_invalid_key_returns_error(self, mock_get):
         mock_responce = Mock(status_code=401)
@@ -64,6 +75,7 @@ class TestGetWeather(unittest.TestCase):
         res = WeatherService.get_weather("London", api_key="fake-invalid-key")
         assert "Invalid API key" in res["error"]["message"]
         assert mock_get.call_count == 1
+
     @patch("services.requests.get")
     def test_weather_city_not_found_returns_error(self, mock_get):
         mock_responce = Mock(status_code=400)
@@ -71,6 +83,7 @@ class TestGetWeather(unittest.TestCase):
         res = WeatherService.get_weather("London", api_key="fake-invalid-key")
         assert "City 'London' not found." in res["error"]["message"]
         assert mock_get.call_count == 1
+
     @patch("services.requests.get")
     def test_weather_success_returns_json(self, mock_get):
         mock_response = Mock(status_code=200)
@@ -80,6 +93,7 @@ class TestGetWeather(unittest.TestCase):
         res = WeatherService.get_weather("London", api_key="fake-invalid-key")
         assert res["current"]["temp_c"] == "33"
         assert mock_get.call_count == 1
+
     @patch("services.requests.get")
     def test_weather_network_error_returns_error(self, mock_get):
         mock_get.side_effect = requests.RequestException("Connection lost")

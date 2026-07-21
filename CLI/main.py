@@ -1,33 +1,46 @@
 import os
 import sys
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import logging
-import random
-from datetime import datetime
 import platform
+import random
 import subprocess
+from datetime import datetime
+
 from config import Config
-from logging_config import setup_logging
-from services import WeatherService
-from models import SessionLocal, WeatherRequest
 from dbclear import clear
+from logging_config import setup_logging
+from models import SessionLocal, WeatherRequest
+from services import WeatherService
 
 setup_logging()
 logger = logging.getLogger(__name__)
 
 RESET, BOLD, BLUE, CYAN, GREEN, YELLOW, RED, ORANGE = (
-    "\033[0m", "\033[1m", "\033[34m", "\033[36m", "\033[32m", "\033[33m", "\033[31m", "\033[35m"
+    "\033[0m",
+    "\033[1m",
+    "\033[34m",
+    "\033[36m",
+    "\033[32m",
+    "\033[33m",
+    "\033[31m",
+    "\033[35m",
 )
+
+
 class WeatherReport:
     def __init__(self, data: dict, for_printing: bool = False):
         self.data = data
         self.for_printing = for_printing
         self.loc, self.curr = data["location"], data["current"]
         self.line_len = 81 if for_printing else 70
+
     def _fmt(self, val, color) -> str:
         if self.for_printing:
             return str(val)
         return f"{color}{val}{RESET}"
+
     def get_color_metrics(self):
         t = self.curr.get("temp_c", 0)
         uv = round(self.curr.get("uv", 0))
@@ -35,56 +48,91 @@ class WeatherReport:
         wind = self.curr.get("wind_kph", 0)
         pop = 0
         try:
-            pop = self.data["forecast"]["forecastday"][0]["hour"][0].get("chance_of_rain", 0)
+            pop = self.data["forecast"]["forecastday"][0]["hour"][0].get(
+                "chance_of_rain", 0
+            )
         except (KeyError, IndexError):
             pass
-        tc = BLUE if t < -10 else CYAN if t < 0 else GREEN if t < 16 else YELLOW if t < 26 else RED
+        tc = (
+            BLUE
+            if t < -10
+            else CYAN if t < 0 else GREEN if t < 16 else YELLOW if t < 26 else RED
+        )
         uc = GREEN if uv <= 2 else YELLOW if uv <= 5 else ORANGE if uv <= 7 else RED
         pc = CYAN if p < 745 else GREEN if p <= 755 else YELLOW if p <= 765 else RED
-        wc = GREEN if wind < 19 else YELLOW if wind < 39 else ORANGE if wind < 61 else RED
+        wc = (
+            GREEN
+            if wind < 19
+            else YELLOW if wind < 39 else ORANGE if wind < 61 else RED
+        )
         rc = GREEN if pop < 20 else CYAN if pop < 50 else YELLOW if pop < 80 else BLUE
 
         return (
-            self._fmt(f"{t}°C", tc), 
-            self._fmt(uv, uc), 
+            self._fmt(f"{t}°C", tc),
+            self._fmt(uv, uc),
             self._fmt(f"{p} мм", pc),
             self._fmt(f"{wind} km/h", wc),
-            self._fmt(f"{pop}%", rc)
+            self._fmt(f"{pop}%", rc),
         )
+
     def display(self):
-        print(f" Date and time: {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}\n" + "-" * self.line_len)
+        print(
+            f" Date and time: {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}\n"
+            + "-" * self.line_len
+        )
         if self.for_printing:
             print(f" City: {self.loc['name']} ({self.loc['country']})")
         else:
-            print(f" City: {BOLD}{self.loc['name']}{RESET} ({BOLD}{self.loc['country']}{RESET})")
+            print(
+                f" City: {BOLD}{self.loc['name']}{RESET} ({BOLD}{self.loc['country']}{RESET})"
+            )
         t_out, uv_out, p_out, wind_out, rain_out = self.get_color_metrics()
-        print(f" Current temperature: {t_out}\n Current UV index: {uv_out}\n"
-              f" Precipitation chance: {rain_out}\n"
-              f" Current pressure: {p_out}\n"
-              f" Wind: {wind_out}\n"
-              f" UV-index: {uv_out}\n"
-              f" Current weather: {self.curr['condition']['text']}\n"
-              + "-" * self.line_len)
+        print(
+            f" Current temperature: {t_out}\n Current UV index: {uv_out}\n"
+            f" Precipitation chance: {rain_out}\n"
+            f" Current pressure: {p_out}\n"
+            f" Wind: {wind_out}\n"
+            f" UV-index: {uv_out}\n"
+            f" Current weather: {self.curr['condition']['text']}\n"
+            + "-" * self.line_len
+        )
         print(" Forecast for 24 hours:\n")
-        print(f" {'Time':<6} | {'Temp':<6} | {'UV-index':<3} | {'Pressure':<7} | {'Precipitations':<5}")
+        print(
+            f" {'Time':<6} | {'Temp':<6} | {'UV-index':<3} | {'Pressure':<7} | {'Precipitations':<5}"
+        )
         print("-" * self.line_len)
-        local_hr = datetime.strptime(self.loc["localtime"], "%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:00")
-        hours = [h for day in self.data["forecast"]["forecastday"] for h in day["hour"] if h["time"] >= local_hr][:24]  
+        local_hr = datetime.strptime(self.loc["localtime"], "%Y-%m-%d %H:%M").strftime(
+            "%Y-%m-%d %H:00"
+        )
+        hours = [
+            h
+            for day in self.data["forecast"]["forecastday"]
+            for h in day["hour"]
+            if h["time"] >= local_hr
+        ][:24]
         for h in hours:
-            pop = h.get('chance_of_rain', 0)
-            print(f" {h['time'].split(' ')[1]:<6} | {h['temp_c']:>2}°C | {round(h['uv']):<8} | {round(h['pressure_mb'] * 0.750062):<8} | {pop}%")
+            pop = h.get("chance_of_rain", 0)
+            print(
+                f" {h['time'].split(' ')[1]:<6} | {h['temp_c']:>2}°C | {round(h['uv']):<8} | {round(h['pressure_mb'] * 0.750062):<8} | {pop}%"
+            )
         print("-" * self.line_len + "\n 3-Day Forecast:\n")
-        print(f" {'Date':<5} | {'Max Temp':<8} | {'Rain Chance':<11} | {'Max UV-index':<8} | {'Wind gusts':<6}")
+        print(
+            f" {'Date':<5} | {'Max Temp':<8} | {'Rain Chance':<11} | {'Max UV-index':<8} | {'Wind gusts':<6}"
+        )
         print("-" * self.line_len)
         for day in self.data["forecast"]["forecastday"]:
-            date_obj = datetime.strptime(day['date'], "%Y-%m-%d")
+            date_obj = datetime.strptime(day["date"], "%Y-%m-%d")
             formatted_date = date_obj.strftime("%d.%m")
             temp = f"{day['day']['avgtemp_c']:.1f}°C"
             pop = f"{day['day']['daily_chance_of_rain']}%"
-            maxuv = round(day['day']['uv'])
+            maxuv = round(day["day"]["uv"])
             gusts = f"{day['day']['maxwind_kph']} km/h"
-            print(f" {formatted_date:<5} | {temp:<8} | {pop:<11} | {maxuv:<12} | {gusts:<6}")
+            print(
+                f" {formatted_date:<5} | {temp:<8} | {pop:<11} | {maxuv:<12} | {gusts:<6}"
+            )
         print("-" * self.line_len)
+
+
 class Main:
     def run(self):
         Config.validate()
@@ -100,7 +148,12 @@ class Main:
         data = srv.get_weather(city)
         if "error" in data:
             try:
-                info_err = WeatherRequest(city=city, source="cli", success=0, error_message=data["error"]["message"])
+                info_err = WeatherRequest(
+                    city=city,
+                    source="cli",
+                    success=0,
+                    error_message=data["error"]["message"],
+                )
                 db_session.add(info_err)
                 db_session.commit()
             finally:
@@ -108,15 +161,23 @@ class Main:
             logger.error(f"Weather fetch failed: {data['error']}")
             return print(f"[-] {data['error']}")
         try:
-            info_suc = WeatherRequest(city=city, source="cli", temp_c=data["current"]["temp_c"],
-                                      condition=data["current"]["condition"]["text"], success=1, error_message=None)
+            info_suc = WeatherRequest(
+                city=city,
+                source="cli",
+                temp_c=data["current"]["temp_c"],
+                condition=data["current"]["condition"]["text"],
+                success=1,
+                error_message=None,
+            )
             db_session.add(info_suc)
             db_session.commit()
         finally:
             db_session.close()
         if random.random() < 0.01:
             clear()
-        print_req = input(" Need to print the forecast? (No; Yes): ").strip().lower() == "yes"
+        print_req = (
+            input(" Need to print the forecast? (No; Yes): ").strip().lower() == "yes"
+        )
         print("-" * 70)
         report = WeatherReport(data, for_printing=print_req)
         if not print_req:
@@ -128,9 +189,15 @@ class Main:
             report.display()
         sys.stdout = orig
         try:
-            subprocess.run(f'notepad.exe /p "{fn}"' if os_t == "Windows" else ["lp", fn], shell=(os_t == "Windows"), check=True)
+            subprocess.run(
+                f'notepad.exe /p "{fn}"' if os_t == "Windows" else ["lp", fn],
+                shell=(os_t == "Windows"),
+                check=True,
+            )
             print("[+] Document successfully printed!")
         except Exception as e:
             print(f"[-] Print spooler failed: {e}")
+
+
 if __name__ == "__main__":
     Main().run()

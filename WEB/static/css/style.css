@@ -1,11 +1,11 @@
-body { 
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-    margin: 0; 
-    padding: 40px; 
-    display: flex; 
-    justify-content: center; 
-    min-height: 100vh; 
-    transition: background 0.8s ease; 
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 0;
+    padding: 40px;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    transition: background 0.8s ease;
 }
 /* Backgrounds */
 .sunny { background: linear-gradient(135deg, #4facfe, #00f2fe); }
@@ -13,69 +13,69 @@ body {
 .cloudy { background: linear-gradient(135deg, #757f9a, #d7dde8); }
 .thunder { background: linear-gradient(135deg, #141e30, #243b55); }
 /* Main cart */
-.card { 
-    background: white; 
-    padding: 30px; 
-    border-radius: 12px; 
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
-    width: 100%; 
-    max-width: 800px; 
+.card {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    width: 100%;
+    max-width: 800px;
 }
 h1 { margin-top: 0; color: #1877f2; font-size: 28px; }
 h3 { color: #1c1e21; margin-top: 30px; margin-bottom: 15px; border-left: 4px solid #1877f2; padding-left: 10px; }
 .time { color: #65676b; font-size: 14px; margin-bottom: 20px; }
 .search-form { display: flex; gap: 10px; margin-bottom: 25px; }
-input[type="text"] { 
-    flex: 1; 
-    padding: 12px; 
-    border: 1px solid #ced4da; 
-    border-radius: 8px; 
-    font-size: 16px; 
+input[type="text"] {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    font-size: 16px;
 }
-button { 
-    padding: 12px 20px; 
-    background-color: #1877f2; 
-    color: white; 
-    border: none; 
-    border-radius: 8px; 
-    font-size: 16px; 
-    cursor: pointer; 
-    font-weight: bold; 
+button {
+    padding: 12px 20px;
+    background-color: #1877f2;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: bold;
 }
 button:hover { background-color: #166fe5; }
 /* Current weather */
-.weather-info p { 
-    font-size: 16px; 
-    margin: 10px 0; 
-    border-bottom: 1px solid #f0f2f5; 
-    padding-bottom: 8px; 
+.weather-info p {
+    font-size: 16px;
+    margin: 10px 0;
+    border-bottom: 1px solid #f0f2f5;
+    padding-bottom: 8px;
 }
 /* Errors */
-.error { 
-    color: #e41e3f; 
-    background: #ffebe9; 
-    padding: 10px; 
-    border-radius: 6px; 
-    font-weight: bold; 
+.error {
+    color: #e41e3f;
+    background: #ffebe9;
+    padding: 10px;
+    border-radius: 6px;
+    font-weight: bold;
 }
 /* Tables */
-.table-container { 
-    width: 100%; 
-    overflow-x: auto; 
-    margin-bottom: 20px; 
-    border-radius: 8px; 
-    border: 1px solid #e4e6eb; 
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    border: 1px solid #e4e6eb;
 }
-table { 
-    width: 100%; 
-    border-collapse: collapse; 
-    text-align: left; 
-    font-size: 15px; 
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 15px;
 }
 th, td { padding: 12px; border-bottom: 1px solid #e4e6eb; }
-th { 
-    background-color: #f0f2f5; 
-    color: #65676b; 
-    font-weight: 600; 
+th {
+    background-color: #f0f2f5;
+    color: #65676b;
+    font-weight: 600;
 }
 tr:hover { background-color: #f9f9fb; }
