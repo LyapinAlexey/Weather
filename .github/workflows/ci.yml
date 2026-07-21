@@ -7,22 +7,25 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      WEATHER_API_KEY: ${{ secrets.API_KEY }}
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+      POSTGRES_DB: test_db
+      DATABASE_URL: postgresql://test_user:test_password@weather_db:5432/test_db
+      POSTGRES_TEST_USER: test_user
+      POSTGRES_TEST_PASSWORD: test_password
+      POSTGRES_TEST_DB: test_weather_db
+      TEST_DATABASE_URL: postgresql://test_user:test_password@weather_test_db:5432/test_weather_db
     steps:
       - uses: actions/checkout@v4
-      - run: echo "WEATHER_API_KEY=${{ secrets.API_KEY }}" >> .env
-      - run: echo "FLASK_PORT=5001" >> .env
-      - run: echo "DATABASE_URL=postgresql://test_user:test_password@weather_db:5432/test_db" >> .env
-      - run: docker compose up -d
-        env:
-          WEATHER_API_KEY: ${{ secrets.API_KEY }}
-          POSTGRES_USER: test_user
-          POSTGRES_PASSWORD: test_password
-          POSTGRES_DB: test_db
-          DATABASE_URL: postgresql://test_user:test_password@weather_db:5432/test_db
-          POSTGRES_TEST_USER: test_user
-          POSTGRES_TEST_PASSWORD: test_password
-          POSTGRES_TEST_DB: test_weather_db
-          TEST_DATABASE_URL: postgresql://test_user:test_password@weather_test_db:5432/test_weather_db
+      - name: Create .env file
+        run: |
+          echo "WEATHER_API_KEY=${{ secrets.API_KEY }}" >> .env
+          echo "FLASK_PORT=5001" >> .env
+          echo "DATABASE_URL=postgresql://test_user:test_password@weather_db:5432/test_db" >> .env
+      - name: Start docker compose
+        run: docker compose up -d
       - name: Wait for PostgreSQL to be ready
         run: |
           echo "[?] Waiting for PostgreSQL..."
@@ -58,9 +61,7 @@ jobs:
           docker compose logs
           exit 1
       - name: Run pytest
-        run: docker compose run --rm cli pytest --cov=. --cov-report=xml
-      - name: Run pytest
-        run: docker compose run --rm -v ${{ github.workspace }}:/app cli pytest --cov=. --cov-report=xml
+        run: docker compose run --rm -v ${{ github.workspace }}:/app cli pytest tests/ --cov=. --cov-report=xml
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
         with:
