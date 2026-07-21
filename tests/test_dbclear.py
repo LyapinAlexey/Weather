@@ -39,6 +39,22 @@ class TestDBClear:
         cities = {r.city for r in remaining}
         assert len(cities) == 2
         assert cities == {"Tokio", "Bangkok"}
+    def test_all_old_records(self, db_session):
+        old_record1 = WeatherRequest(
+            city="Toronto",
+            source="web",
+            created_at=datetime.now(timezone.utc).replace(tzinfo=None) - relativedelta(months=5)
+        )
+        old_record2 = WeatherRequest(
+            city="Ottava",
+            source="web",
+            created_at=datetime.now(timezone.utc).replace(tzinfo=None) - relativedelta(months=5)
+        )
+        db_session.add_all([old_record1, old_record2])
+        db_session.commit()
+        clear(db_session)
+        remaining = db_session.query(WeatherRequest).all()
+        assert len(remaining) == 0
     def test_boundary_cutoff_date(self, db_session):
         boundary_record = WeatherRequest(
             city="Paris",

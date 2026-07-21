@@ -5,6 +5,9 @@ Production-grade weather application with a Flask web interface and CLI tool, bu
 ![CI](https://github.com/LyapinAlexey/Weather/actions/workflows/ci.yml/badge.svg)
 ![Python](https://img.shields.io/badge/python-3.13-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
+[![codecov](https://codecov.io/github/LyapinAlexey/Weather/graph/badge.svg?token=VIAZVWQ81B)](
+  https://codecov.io/github/LyapinAlexey/Weather
+)
 
 ## Features
 
@@ -18,12 +21,12 @@ Production-grade weather application with a Flask web interface and CLI tool, bu
 - 🔄 CI pipeline via GitHub Actions (build, migrate, health check)
 - 🧪 34+ automated tests (pytest): unit, mocked service, Flask route, and real PostgreSQL integration tests
 
-## Tech Stack
+### Tech Stack
 
-**Backend:** Python, Flask, gunicorn, SQLAlchemy, Alembic, Marshmallow, flask-limiter
-**Database:** PostgreSQL
-**Infra:** Docker, Docker Compose, GitHub Actions
-**Testing:** pytest, unittest.mock
+- **Backend:** `Python 3.13`, `Flask`, `Gunicorn`, `SQLAlchemy`, `Alembic`, `Marshmallow`, `Flask-Limiter`
+- **Database:** `PostgreSQL`
+- **Infrastructure & DevOps:** `Docker`, `Docker Compose`, `GitHub Actions (CI/CD)`
+- **Testing & Quality:** `Pytest`, `unittest.mock`, `Codecov`
 
 ## Quick Start (Docker)
 

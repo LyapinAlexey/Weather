@@ -9,40 +9,68 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: echo "WEATHER_API_KEY=${{ secrets.API_KEY }}" >> .env
-      - run: echo "FLASK_PORT=5001" >> .env
-      - run: echo "DATABASE_URL=postgresql://test_user:test_password@weather_db:5432/test_db" >> .env
-      - run: docker compose up -d
+      - name: Create .env file
+        run: |
+          echo "WEATHER_API_KEY=${{ secrets.API_KEY }}" >> .env
+          echo "FLASK_PORT=5001" >> .env
+          echo "DATABASE_URL=postgresql://test_user:test_password@weather_db:5432/test_db" >> .env
+          echo "TEST_DATABASE_URL=postgresql://test_user:test_password@weather_test_db:5432/test_weather_db" >> .env
+      - name: Start docker compose
+        run: docker compose up -d
         env:
           WEATHER_API_KEY: ${{ secrets.API_KEY }}
           POSTGRES_USER: test_user
           POSTGRES_PASSWORD: test_password
           POSTGRES_DB: test_db
           DATABASE_URL: postgresql://test_user:test_password@weather_db:5432/test_db
+          POSTGRES_TEST_USER: test_user
+          POSTGRES_TEST_PASSWORD: test_password
+          POSTGRES_TEST_DB: test_weather_db
+          TEST_DATABASE_URL: postgresql://test_user:test_password@weather_test_db:5432/test_weather_db
       - name: Wait for PostgreSQL to be ready
         run: |
-          echo "⏳ Waiting for PostgreSQL..."
+          echo "[?] Waiting for PostgreSQL..."
           until docker compose exec -T weather_db pg_isready -U test_user -d test_db; do
-            echo "Database is starting up, retrying in 2 seconds..."
+            echo "[+] Database is starting up, retrying in 2 seconds..."
             sleep 2
           done
-          echo "✅ PostgreSQL is ready for use!"
-      - run: docker compose run --rm cli alembic upgrade head
+          echo "[+] PostgreSQL is ready for use!"
+      - name: Wait for test PostgreSQL
+        run: | 
+          echo "[?] Waiting for PostgreSQL..."
+          until docker compose exec -T weather_test_db pg_isready -U test_user -d test_weather_db; do
+            echo "[+] Database is starting up, retrying in 2 seconds..."
+            sleep 2
+          done
+          echo "[+] PostgreSQL is ready for use!"
+      - name: Alembic for test db
+        run: docker compose run --rm -e DATABASE_URL="postgresql://test_user:test_password@weather_test_db:5432/test_weather_db" cli alembic upgrade head
       - name: Wait for server and test endpoint
         run: |
-          echo "⏱️ Waiting for port 5001 to respond..."
+          echo "[+] Waiting for port 5001 to respond..."
           for i in {1..15}; do
             if curl -s http://localhost:5001/ > /dev/null; then
-              echo "✅ Server responded successfully!"
+              echo "[+] Server responded successfully!"
               curl -v http://localhost:5001/
               exit 0
             fi
-            echo "Attempt $i: server is sleeping, waiting..."
+            echo "[?] Attempt $i: server is sleeping, waiting..."
             sleep 2
           done
-          echo "❌ Error: Server failed to start."
+          echo "[-] Error: Server failed to start."
+          echo "[+] Docker Logs:"
           docker compose logs
           exit 1
+      - name: Run pytest
+        run: docker compose run --rm -v ${{ github.workspace }}:/main cli pytest tests/ --cov=. --cov-report=xml
+        env:
+          WEATHER_API_KEY: ${{ secrets.API_KEY }}
+          DATABASE_URL: postgresql://test_user:test_password@weather_test_db:5432/test_weather_db
+          TEST_DATABASE_URL: postgresql://test_user:test_password@weather_test_db:5432/test_weather_db
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
       - name: Check Docker Logs
         run: docker compose logs
         if: always()
