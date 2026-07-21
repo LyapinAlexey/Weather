@@ -24,6 +24,7 @@ jobs:
           echo "WEATHER_API_KEY=${{ secrets.API_KEY }}" >> .env
           echo "FLASK_PORT=5001" >> .env
           echo "DATABASE_URL=postgresql://test_user:test_password@weather_db:5432/test_db" >> .env
+          echo "TEST_DATABASE_URL=postgresql://test_user:test_password@weather_test_db:5432/test_weather_db" >> .env
       - name: Start docker compose
         run: docker compose up -d
       - name: Wait for PostgreSQL to be ready
@@ -61,7 +62,7 @@ jobs:
           docker compose logs
           exit 1
       - name: Run pytest
-        run: docker compose run --rm -v ${{ github.workspace }}:/main -e DATABASE_URL="postgresql://test_user:test_password@weather_test_db:5432/test_weather_db" cli pytest tests/ --cov=. --cov-report=xml
+        run: docker compose run --rm --env-file .env -v ${{ github.workspace }}:/main -e DATABASE_URL="postgresql://test_user:test_password@weather_test_db:5432/test_weather_db" -e TEST_DATABASE_URL="postgresql://test_user:test_password@weather_test_db:5432/test_weather_db" cli pytest tests/ --cov=. --cov-report=xml
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
         with:
