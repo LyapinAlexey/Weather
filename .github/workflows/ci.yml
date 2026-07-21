@@ -61,7 +61,7 @@ jobs:
           docker compose logs
           exit 1
       - name: Run pytest
-        run: docker compose run --rm -v ${{ github.workspace }}:/main cli pytest tests/ --cov=. --cov-report=xml
+        run: docker compose run --rm -v ${{ github.workspace }}:/main -e DATABASE_URL="postgresql://test_user:test_password@weather_test_db:5432/test_weather_db" cli pytest tests/ --cov=. --cov-report=xml
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
         with:
