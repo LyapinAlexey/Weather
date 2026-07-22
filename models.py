@@ -1,13 +1,18 @@
 from datetime import datetime
 
 from sqlalchemy import Column, DateTime, Float, Integer, String, create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from config import Config
 
+if Config.DATABASE_URL is None:
+    raise ValueError("DATABASE_URL environment variable is not set")
 engine = create_engine(Config.DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
-Base = declarative_base()
+
+
+class Base(DeclarativeBase):
+    pass
 
 
 class WeatherRequest(Base):

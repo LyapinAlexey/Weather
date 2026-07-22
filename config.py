@@ -15,7 +15,7 @@ class Config:
     DATABASE_URL = os.getenv("DATABASE_URL")
 
     @classmethod
-    def validate(cls):
+    def validate(cls) -> None:
         if not cls.SECRET_KEY:
             raise RuntimeError(
                 "SECRET_KEY is not set. Add it to your .env file (see .env.example)."

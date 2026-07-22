@@ -1,17 +1,21 @@
 import os
+from typing import Any, Generator
 
 import pytest
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 
 from models import Base
 from WEB import app as flask_app
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
+if TEST_DATABASE_URL is None:
+    raise ValueError("TEST_DATABASE_URL environment variable is not set")
 
 
 @pytest.fixture
-def db_session():
+def db_session() -> Generator[Session, None, None]:
+    assert TEST_DATABASE_URL is not None
     engine = create_engine(TEST_DATABASE_URL)
     Base.metadata.create_all(bind=engine)
     connection = engine.connect()
@@ -26,7 +30,7 @@ def db_session():
 
 
 @pytest.fixture
-def client():
+def client() -> Generator[Any, None, None]:
     flask_app.config["TESTING"] = True
     with flask_app.test_client() as client:
         yield client

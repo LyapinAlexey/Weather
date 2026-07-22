@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class WeatherService:
     @staticmethod
-    def get_city_by_ip(ip_address=None) -> str:
+    def get_city_by_ip(ip_address: str | None = None) -> str:
         if not ip_address or ip_address in ("127.0.0.1", "localhost", None):
             return "London"
         if "," in ip_address:
@@ -19,7 +19,7 @@ class WeatherService:
             if geo_resp.status_code == 200:
                 data = geo_resp.json()
                 if data.get("status") == "success" and data.get("city"):
-                    return data.get("city")
+                    return str(data.get("city"))
         except Exception as e:
             logger.error(f"IP-API Error: {e}")
         try:
@@ -27,13 +27,13 @@ class WeatherService:
             if response.status_code == 200:
                 data = response.json()
                 if data.get("city"):
-                    return data.get("city")
+                    return str(data.get("city"))
         except Exception as e:
             logger.error(f"Ipinfo Error: {e}")
         return "London"  # default city if all else fails
 
     @staticmethod
-    def get_weather(city: str, api_key: str = None) -> dict:
+    def get_weather(city: str, api_key: str | None = None) -> dict:
         active_key = api_key or getattr(Config, "WEATHER_API_KEY", None)
         if not active_key:
             return {

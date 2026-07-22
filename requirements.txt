@@ -11,3 +11,6 @@ python-dateutil==2.9.0
 flask-limiter==4.1.1
 pytest-cov==7.1.0
 pre-commit==4.6.0
+mypy==2.3.0
+types-requests==2.33.0.20260712
+types-python-dateutil==2.9.0.20260716
