@@ -63,5 +63,16 @@ Found a bug or have a suggestion? Please open a [GitHub Issue](https://github.co
 
 ## Code style
 
-Linting and formatting are not yet enforced via pre-commit hooks or CI (planned for a future update).
-In the meantime, please try to keep your code style consistent with the existing codebase.
+This project uses pre-commit hooks (black, ruff, isort) to enforce consistent formatting and linting.
+Install and activate them locally:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+Hooks run automatically on `git commit`. You can also run them manually on all files:
+
+```bash
+pre-commit run --all-files
+```

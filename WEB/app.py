@@ -35,7 +35,7 @@ app.secret_key = Config.SECRET_KEY
 
 
 @app.teardown_appcontext
-def shutdown_session(exception=None):
+def shutdown_session(exception: BaseException | None = None) -> None:
     db_session = g.pop("db_session", None)
     if db_session is not None:
         db_session.close()
@@ -45,7 +45,7 @@ def shutdown_session(exception=None):
 @limiter.limit(
     "25 per minute"
 )  # Limit to 25 requests per minute per IP x 4 workers = 100 requests per minute
-def index():
+def index() -> str:
     config_api_key = getattr(Config, "WEATHER_API_KEY", None)
     if "db_session" not in g:
         g.db_session = SessionLocal()
@@ -168,7 +168,7 @@ def index():
         )
     bg_class = determine_bg_class(data["current"]["condition"]["text"])
     if random.random() < 0.01:
-        clear()
+        clear(g.db_session)
     return render_template(
         "index.html",
         weather=data,

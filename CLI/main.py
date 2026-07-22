@@ -30,18 +30,18 @@ RESET, BOLD, BLUE, CYAN, GREEN, YELLOW, RED, ORANGE = (
 
 
 class WeatherReport:
-    def __init__(self, data: dict, for_printing: bool = False):
+    def __init__(self, data: dict, for_printing: bool = False) -> None:
         self.data = data
         self.for_printing = for_printing
         self.loc, self.curr = data["location"], data["current"]
         self.line_len = 81 if for_printing else 70
 
-    def _fmt(self, val, color) -> str:
+    def _fmt(self, val: int | str, color: str) -> str:
         if self.for_printing:
             return str(val)
         return f"{color}{val}{RESET}"
 
-    def get_color_metrics(self):
+    def get_color_metrics(self) -> tuple[str, str, str, str, str]:
         t = self.curr.get("temp_c", 0)
         uv = round(self.curr.get("uv", 0))
         p = round(self.curr.get("pressure_mb", 1013) * 0.750062)
@@ -75,7 +75,7 @@ class WeatherReport:
             self._fmt(f"{pop}%", rc),
         )
 
-    def display(self):
+    def display(self) -> None:
         print(
             f" Date and time: {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}\n"
             + "-" * self.line_len
@@ -134,7 +134,7 @@ class WeatherReport:
 
 
 class Main:
-    def run(self):
+    def run(self) -> None:
         Config.validate()
         db_session = SessionLocal()
         srv = WeatherService()
@@ -174,7 +174,7 @@ class Main:
         finally:
             db_session.close()
         if random.random() < 0.01:
-            clear()
+            clear(db_session)
         print_req = (
             input(" Need to print the forecast? (No; Yes): ").strip().lower() == "yes"
         )

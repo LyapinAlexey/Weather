@@ -2,6 +2,7 @@ import logging
 from datetime import datetime, timezone
 
 from dateutil.relativedelta import relativedelta
+from sqlalchemy.orm import Session
 
 from logging_config import setup_logging
 from models import SessionLocal, WeatherRequest
@@ -10,7 +11,7 @@ setup_logging()
 logger = logging.getLogger(__name__)
 
 
-def clear(session) -> None:
+def clear(session: Session) -> None:
     # datetime.now(timezone.utc) + replace(tzinfo=None) instead of deprecated utcnow();
     # stays naive to match models.py created_at (which is also naive) — avoiding schema migration
     cutoff_date = datetime.now(timezone.utc).replace(tzinfo=None) - relativedelta(

@@ -11,6 +11,7 @@ from alembic import context
 from config import Config
 from models import Base
 
+assert Config.DATABASE_URL is not None
 config = context.config
 
 config.set_main_option("sqlalchemy.url", Config.DATABASE_URL)
