@@ -61,16 +61,37 @@ DATABASE_URL="postgresql://test_user:test_password@localhost:5433/test_weather_d
 pytest -v
 ```
 
-## Project Structure
-```text
-Weather/
-├── WEB/ # Flask web app
-├── CLI/ # CLI tool
-├── tests/ # pytest suite
-├── alembic/ # DB migrations
-├── schemas.py # Marshmallow validation
-├── services.py # Shared weather/geo service layer
-├── models.py # SQLAlchemy models
-├── config.py # Env-based configuration
-└── docker-compose.yml
+## Project Architecture
+
+```mermaid
+graph TD
+    %% Interfaces & Entrypoints
+    Client([Client / Browser]) -->|HTTP / Gunicorn| Web[WEB / Flask App]
+    CLIUser([Administrator]) -->|Command Line| CLI[CLI / main.py]
+
+    %% Shared Application Layer
+    subgraph AppLayer [Shared Modules & Business Logic]
+        Web & CLI --> Services[services.py: Weather, Geolocation & Rate Limiting]
+        Web & CLI --> Schemas[schemas.py: Marshmallow Validation]
+        Web & CLI --> Models[models.py: SQLAlchemy ORM]
+
+        Services --> WeatherAPI[WeatherAPI.com]
+        Services --> IPAPI[ip-api.com / ipinfo.io]
+    end
+
+    %% Data & Migrations Layer
+    subgraph DataLayer [Data Management]
+        Models --> Alembic[alembic/: DB Migrations]
+        Alembic --> ProdDB[(PostgreSQL: Prod / Dev DB)]
+    end
+
+    %% Testing & CI/CD Infrastructure
+    subgraph TestingInfra [Testing & CI/CD]
+        CI[.github/workflows/: CI Pipeline] --> Pytest[tests/: Pytest, Mocks & Integration]
+        Pytest --> TestDB[(PostgreSQL: weather_test_db)]
+        CI --> Docker[Docker Compose Stack]
+    end
+
+    classDef db fill:#f9f,stroke:#333,stroke-width:1px;
+    class ProdDB,TestDB db;
 ```
