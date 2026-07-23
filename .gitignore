@@ -11,8 +11,11 @@ env/
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# Cache
 .coverage
 .mypy_cashe/
+.ruff_cache/
 
 # System files
 .DS_Store

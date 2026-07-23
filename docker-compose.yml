@@ -7,7 +7,8 @@ services:
       - "${FLASK_PORT}:${FLASK_PORT}"
     env_file: .env
     depends_on:
-      - weather_db
+      weather_db:
+        condition: service_healthy
   weather_db:
     image: postgres:16
     ports:
@@ -18,6 +19,11 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
   weather_test_db:
     image: postgres:16
     ports:
@@ -32,7 +38,8 @@ services:
       dockerfile: CLI/Dockerfile
     env_file: .env
     depends_on:
-      - weather_db
+      weather_db:
+        condition: service_healthy
     stdin_open: true
     tty: true
 volumes:

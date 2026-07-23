@@ -87,3 +87,22 @@ class TestRoutes:
             b"City &#39;Invalid-city&#39; not found" in response.data
         )  # &#39; is the HTML entity for a single quote
         mock_get_city.assert_not_called()
+
+    @patch("WEB.app.SessionLocal")
+    def test_health_check_db_ok_returns_200(self, mock_session_local, client):
+        mock_session = MagicMock()
+        mock_session_local.return_value = mock_session
+        response = client.get("/health")
+        data = response.get_json()
+        assert data["status"] == "ok"
+        assert response.status_code == 200
+
+    @patch("WEB.app.SessionLocal")
+    def test_health_check_db_error_returns_503(self, mock_session_local, client):
+        mock_session = MagicMock()
+        mock_session_local.return_value = mock_session
+        mock_session.execute.side_effect = Exception("db down")
+        response = client.get("/health")
+        data = response.get_json()
+        assert data["status"] == "error"
+        assert response.status_code == 503

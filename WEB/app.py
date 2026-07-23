@@ -10,6 +10,7 @@ from flask import Flask, g, render_template, request, session
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from marshmallow import ValidationError
+from sqlalchemy import text
 
 from bg_class import determine_bg_class
 from config import Config
@@ -178,6 +179,19 @@ def index() -> str:
         now=datetime.now().strftime("%Y-%m-%d %H:%M"),
         show_key_input=not config_api_key,
     )
+
+
+@app.route("/health")
+def health_check() -> tuple[dict[str, str], int]:
+    session = SessionLocal()
+    try:
+        session.execute(text("SELECT 1"))
+        return {"status": "ok"}, 200
+    except Exception as e:
+        logger.error(f"Health check error: {e}")
+        return {"status": "error", "detail": "503 Service Unavailable"}, 503
+    finally:
+        session.close()
 
 
 if __name__ == "__main__":
