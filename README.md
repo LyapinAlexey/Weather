@@ -74,3 +74,7 @@ Weather/
 ├── config.py # Env-based configuration
 └── docker-compose.yml
 ```
+
+## Project architecture
+
+![Project architecture](docs/architecture.svg)
