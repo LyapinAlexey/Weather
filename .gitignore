@@ -14,7 +14,7 @@ __pycache__/
 
 # Cache
 .coverage
-.mypy_cashe/
+.mypy_cache/
 .ruff_cache/
 
 # System files

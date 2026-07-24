@@ -26,8 +26,8 @@ def clear(session: Session) -> None:
         )
         db_session.commit()
         logger.info(f"Cleared files: {result}")
-    except Exception as e:
-        logger.error(f"Error while clearing database: {e}")
+    except Exception:
+        logger.exception("Error while clearing database")
         db_session.rollback()
     finally:
         db_session.close()

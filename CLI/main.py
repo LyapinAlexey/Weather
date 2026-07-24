@@ -158,7 +158,7 @@ class Main:
                 db_session.commit()
             finally:
                 db_session.close()
-            logger.error(f"Weather fetch failed: {data['error']}")
+            logger.warning(f"Weather fetch failed: {data['error']}")
             return print(f"[-] {data['error']}")
         try:
             info_suc = WeatherRequest(
