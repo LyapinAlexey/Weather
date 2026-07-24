@@ -1,14 +1,4 @@
 services:
-  web:
-    build:
-      context: .
-      dockerfile: WEB/Dockerfile
-    ports:
-      - "${FLASK_PORT}:${FLASK_PORT}"
-    env_file: .env
-    depends_on:
-      weather_db:
-        condition: service_healthy
   weather_db:
     image: postgres:16
     ports:
@@ -20,10 +10,31 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
+  migration:
+    build:
+      context: .
+      dockerfile: WEB/Dockerfile
+    command: alembic upgrade head
+    env_file: .env
+    depends_on:
+      weather_db:
+        condition: service_healthy
+  web:
+    build:
+      context: .
+      dockerfile: WEB/Dockerfile
+    ports:
+      - "${FLASK_PORT}:${FLASK_PORT}"
+    env_file: .env
+    depends_on:
+      weather_db:
+        condition: service_healthy
+      migration:
+        condition: service_completed_successfully
   weather_test_db:
     image: postgres:16
     ports:
@@ -40,6 +51,8 @@ services:
     depends_on:
       weather_db:
         condition: service_healthy
+      migration:
+        condition: service_completed_successfully
     stdin_open: true
     tty: true
 volumes:

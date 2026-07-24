@@ -56,7 +56,7 @@ def index() -> str:
             schema.load({"city": city})
         except ValidationError:
             error = "Error while fetching city: city must be a string and between 1 and 100 characters. City isn't valid"
-            logger.error(error)
+            logger.warning(error)
             info_valide_err = WeatherRequest(
                 city=city if len(city) <= 100 else city[:95] + "...",
                 source="web",
@@ -187,8 +187,8 @@ def health_check() -> tuple[dict[str, str], int]:
     try:
         session.execute(text("SELECT 1"))
         return {"status": "ok"}, 200
-    except Exception as e:
-        logger.error(f"Health check error: {e}")
+    except Exception:
+        logger.exception("Health check error")
         return {"status": "error", "detail": "503 Service Unavailable"}, 503
     finally:
         session.close()
