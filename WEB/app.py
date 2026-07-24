@@ -6,6 +6,7 @@ import logging
 import random
 from datetime import datetime
 
+from api_routes import api_bp
 from flask import Flask, g, render_template, request, session
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -29,6 +30,7 @@ limiter = Limiter(
     app=app,
     storage_uri="memory://",
 )
+app.register_blueprint(api_bp)
 app.config.from_object(Config)
 Config.validate()
 schema = CityRequestSchema()
