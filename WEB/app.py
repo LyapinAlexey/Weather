@@ -6,7 +6,10 @@ import logging
 import random
 from datetime import datetime
 
-from api_routes import api_bp
+try:
+    from .api_routes import api_bp
+except ImportError:
+    from api_routes import api_bp  # type: ignore[no-redef]
 from flask import Flask, g, render_template, request, session
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
