@@ -11,6 +11,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_talisman import Talisman
 from marshmallow import ValidationError
+from prometheus_flask_exporter import PrometheusMetrics
 from sqlalchemy import text
 
 from bg_class import determine_bg_class
@@ -26,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 Talisman(app, force_https=False)
+metrics = PrometheusMetrics(app)
 limiter = Limiter(
     key_func=get_remote_address,
     app=app,
