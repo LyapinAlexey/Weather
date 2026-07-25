@@ -9,6 +9,7 @@ from datetime import datetime
 from flask import Flask, g, render_template, request, session
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flask_talisman import Talisman
 from marshmallow import ValidationError
 from sqlalchemy import text
 
@@ -24,12 +25,14 @@ setup_logging()
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+Talisman(app, force_https=False)
 limiter = Limiter(
     key_func=get_remote_address,
     app=app,
     storage_uri="memory://",
 )
 app.config.from_object(Config)
+app.config["MAX_CONTENT_LENGTH"] = 1 * 1024 * 1024  # 1 MB
 Config.validate()
 schema = CityRequestSchema()
 app.secret_key = Config.SECRET_KEY
@@ -40,6 +43,12 @@ def shutdown_session(exception: BaseException | None = None) -> None:
     db_session = g.pop("db_session", None)
     if db_session is not None:
         db_session.close()
+
+
+@app.before_request
+def check_user_agent():
+    if not request.headers.get("User-Agent"):
+        return {"error": "User-Agent header required"}, 400
 
 
 @app.route("/", methods=["GET", "POST"])
