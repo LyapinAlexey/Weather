@@ -20,6 +20,11 @@ Production-grade weather application with a Flask web interface and CLI tool, bu
 - 🐳 Fully containerized with Docker Compose
 - 🔄 CI pipeline via GitHub Actions (build, migrate, health check)
 - 🧪 45+ automated tests (pytest): unit, mocked service, Flask route, and real PostgreSQL integration tests
+- 🔌 JSON REST API (`/api/weather`) with interactive Swagger/OpenAPI docs
+- 📊 Prometheus metrics endpoint (`/metrics`) for observability
+- ❤️ Readiness health check (`/health`) with Docker/Compose integration
+- 🔒 Security hardening: secure headers (Talisman), request size limits, User-Agent validation
+- 📝 Structured JSON logging
 
 ### Tech Stack
 
@@ -27,6 +32,9 @@ Production-grade weather application with a Flask web interface and CLI tool, bu
 - **Database:** `PostgreSQL`
 - **Infrastructure & DevOps:** `Docker`, `Docker Compose`, `GitHub Actions (CI/CD)`
 - **Testing & Quality:** `Pytest`, `unittest.mock`, `Codecov`
+- **API & Docs:** `apispec`, `flask-swagger-ui` (OpenAPI/Swagger)
+- **Observability:** `prometheus-flask-exporter`, structured JSON logging
+- **Security:** `flask-talisman`
 
 ## Quick Start (Docker)
 
@@ -50,6 +58,21 @@ Production-grade weather application with a Flask web interface and CLI tool, bu
 ```bash
 docker compose run --rm cli python main.py
 ```
+## API
+
+The app exposes a JSON REST API alongside the web UI.
+
+| Endpoint             | Method | Description                                                |
+|----------------------|--------|------------------------------------------------------------|
+| `/api/weather`       | GET    | Get current weather + forecast for a city (`?city=Berlin`) |
+| `/api/apispec.json`  | GET    | Raw OpenAPI 3.0 specification                              |
+| `/health`            | GET    | Readiness check (verifies DB connectivity)                 |
+| `/metrics`           | GET    | Prometheus metrics                                         |
+
+Interactive API documentation (Swagger UI) is available at:
+```url
+http://localhost:5001/apidocs
+```
 
 ## Running Tests
 
@@ -65,6 +88,9 @@ pytest -v
 ```text
 Weather/
 ├── WEB/ # Flask web app
+|   ├── api_routes.py    # JSON API routes (/api/weather, /api/apispec.json)
+│   ├── swagger_config.py # OpenAPI spec configuration
+│   └── logging_config.py # Structured JSON logging setup
 ├── CLI/ # CLI tool
 ├── tests/ # pytest suite
 ├── alembic/ # DB migrations
