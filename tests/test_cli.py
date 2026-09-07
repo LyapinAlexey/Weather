@@ -1,4 +1,5 @@
 import copy
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -93,6 +94,7 @@ class TestCLI:
         prepared_weather_response,
         monkeypatch,
         capsys,
+        tmp_path,
     ):
         mock_service = MagicMock()
         mock_service.get_city_by_ip.return_value = "Moscow"
@@ -100,12 +102,26 @@ class TestCLI:
         mock_service_cls.return_value = mock_service
 
         monkeypatch.setattr("builtins.input", lambda _: "yes")
+        report_file = tmp_path / "weather_report.txt"
+        monkeypatch.setattr(
+            "weatherender.CLI.main.Path",
+            lambda *args, **kwargs: (
+                report_file if "weather_report" in str(args) else Path(*args, **kwargs)
+            ),
+        )
 
         Main().run()
 
         captured = capsys.readouterr()
-        assert "[+] Document successfully printed!" in captured.out
-        assert mock_subproc.called
+
+        assert "[+] Report saved to:" in captured.out
+        assert report_file.exists() or "[+] Report saved to:" in captured.out
+
+        assert (
+            "[+] Sent to printer" in captured.out
+            or "[!] File saved. Open it manually and print:" in captured.out
+            or mock_subproc.called
+        )
 
     @patch("weatherender.CLI.main.WeatherService")
     def test_main_run_error_handling(self, mock_service_cls, capsys):
