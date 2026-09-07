@@ -4,6 +4,14 @@ All notable changes to **Weatherender** (formerly *Weather*), organized by date 
 
 > Note: the repository's earliest history (24–30 June) contains a run of commits literally named `v1.0.0` through `v4.2.4` — an early, pre-conventional-commits naming habit rather than meaningful version releases. They're omitted below in favor of the descriptive commit messages from the same period, once a proper (`feat:`/`fix:`/`docs:`) commit style was adopted.
 
+## 2026-09-07 - CLI report saving & print handling
+
+- Fixed CLI weather report saving: when user answers "yes" to print, the report is now correctly written to `src/weatherender/CLI/weather_report.txt`.
+- Made the save path reliable inside Docker (`Path(__file__)` + volume mount `./src:/app/src`).
+- Added graceful fallback when no printer is available (common in Docker on macOS): the file is still saved and the path is shown to the user.
+- Improved `print_file()` to try system default printer / first available printer, then fall back to manual open instruction.
+- Fixed `docker-compose.yml` indentation and added source volume for the `cli` service so the report file updates on the host.
+
 ## 2026-09-03 — src layout, PyPI package, GHCR image
 
 - Packaged the project as an installable Python distribution (`pyproject.toml`, name `weatherender==2.0.0`) with a `src/weatherender/` layout. Console script: `weatherender` → `weatherender.CLI.main:main`.

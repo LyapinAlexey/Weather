@@ -14,6 +14,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
   cache:
     image: redis:7-alpine
     ports:
@@ -23,6 +24,7 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+
   migration:
     build:
       context: .
@@ -35,6 +37,7 @@ services:
       cache:
         condition: service_healthy
     restart: on-failure
+
   web:
     build:
       context: .
@@ -49,6 +52,7 @@ services:
         condition: service_healthy
       migration:
         condition: service_completed_successfully
+
   api:
     build:
       context: .
@@ -63,6 +67,7 @@ services:
         condition: service_healthy
       migration:
         condition: service_completed_successfully
+
   weather_test_db:
     image: postgres:16
     ports:
@@ -71,6 +76,7 @@ services:
       - POSTGRES_USER=${POSTGRES_TEST_USER}
       - POSTGRES_PASSWORD=${POSTGRES_TEST_PASSWORD}
       - POSTGRES_DB=${POSTGRES_TEST_DB}
+
   cli:
     build:
       context: .
@@ -83,7 +89,10 @@ services:
         condition: service_healthy
       migration:
         condition: service_completed_successfully
+    volumes:
+      - ./src:/app/src
     stdin_open: true
     tty: true
+
 volumes:
   postgres_data:
