@@ -62,11 +62,11 @@ For the full local stack (web + api + postgres + redis) use Docker Compose below
 - 🚦 Rate limiting & protection: granular per-worker rate limiting (`flask-limiter` for v1, `slowapi` for v2), confirmed experimentally via `scripts/check_limit.sh` (400 sequential requests, graceful `429 Too Many Requests` degradation beyond the quota)
 - 🐳 Fully containerized with Docker Compose
 - 🐬 Docker image on GHCR: [`ghcr.io/weatherender-foundation/weatherender-api`](https://github.com/Weatherender-foundation/Weatherender/pkgs/container/weatherender-api)
-- Published on PyPI: [`pip install weatherender`](https://pypi.org/project/weatherender/)
+- 🐍 Published on PyPI: [`pip install weatherender`](https://pypi.org/project/weatherender/)
 - 🔄 CI/CD via GitHub Actions (build, migrate, health check, image publish)
 - 🧪 119+ automated tests (pytest): unit, mocked service, Flask route, and real PostgreSQL integration tests
 - 🔌 JSON REST API (`/api/weather` and `/api/v2/weather`) with interactive Swagger/OpenAPI docs
-- ⚡ Redis caching for WeatherAPI responses (TTL-based, graceful fallback on Redis unavailability)
+- ⚡️ Redis caching for WeatherAPI responses (TTL-based, graceful fallback on Redis unavailability)
 - 📊 Prometheus metrics endpoint (`/metrics`) for observability
 - ❤️ Readiness health check (`/health`) with Docker/Compose integration
 - 🔒 Security hardening: secure headers (Talisman), request size limits, User-Agent validation
@@ -104,6 +104,8 @@ python -c "import secrets; print(secrets.token_hex(32))"
 ```
 
 3. Start the stack:
+
+> Make sure Docker Desktop is installed
 
 ```bash
 docker compose up -d

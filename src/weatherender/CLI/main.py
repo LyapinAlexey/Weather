@@ -1,8 +1,10 @@
 import logging
 import platform
+import shutil
 import subprocess
 import sys
 from datetime import datetime
+from pathlib import Path
 
 from weatherender.config import Config
 from weatherender.logging_config import setup_logging
@@ -49,6 +51,7 @@ class WeatherReport:
             )
         except (KeyError, IndexError):
             pass
+
         tc = (
             BLUE
             if t < -10
@@ -119,14 +122,14 @@ class WeatherReport:
             f" Current pressure: {p_out}\n"
             f" Wind: {wind_out}\n"
             f" Current weather: {self.curr['condition']['text']}\n"
-            f" Snow conditions: {BOLD}{snow_info['status']}{RESET if not self.for_printing else ''}\n"
-            + "-" * self.line_len
+            f" Snow conditions: {snow_info['status']}\n" + "-" * self.line_len
         )
         print(" Forecast for 24 hours:\n")
         print(
             f" {'Time':<6} | {'Temp':<6} | {'UV-index':<3} | {'Pressure':<7} | {'Precipitations':<5}"
         )
         print("-" * self.line_len)
+
         local_hr = datetime.strptime(self.loc["localtime"], "%Y-%m-%d %H:%M").strftime(
             "%Y-%m-%d %H:00"
         )
@@ -136,14 +139,18 @@ class WeatherReport:
             for h in day["hour"]
             if h["time"] >= local_hr
         ][:24]
+
         for h in hours:
             pop = h.get("chance_of_rain", 0)
             print(
-                f" {h['time'].split(' ')[1]:<6} | {h['temp_c']:>2}°C | {round(h['uv']):<8} | {round(h['pressure_mb'] * 0.750062):<8} | {pop}%"
+                f" {h['time'].split(' ')[1]:<6} | {h['temp_c']:>2}°C | {round(h['uv']):<8} | "
+                f"{round(h['pressure_mb'] * 0.750062):<8} | {pop}%"
             )
+
         print("-" * self.line_len + "\n 3-Day Forecast:\n")
         print(
-            f" {'Date':<5} | {'Max Temp':<8} | {'Rain Chance':<11} | {'Max UV-index':<8} | {'Wind gusts':<6} | {'Snow State':<18}"
+            f" {'Date':<5} | {'Max Temp':<8} | {'Rain Chance':<11} | {'Max UV-index':<8} | "
+            f"{'Wind gusts':<6} | {'Snow State':<18}"
         )
         print("-" * self.line_len)
 
@@ -154,6 +161,7 @@ class WeatherReport:
             pop = f"{day['day']['daily_chance_of_rain']}%"
             maxuv = round(day["day"]["uv"])
             gusts = f"{day['day']['maxwind_kph']} km/h"
+
             day_snow = get_snow_state(
                 temp_c=day["day"]["avgtemp_c"],
                 min_temp_c=day["day"]["mintemp_c"],
@@ -170,9 +178,82 @@ class WeatherReport:
                 totalsnow_cm=day["day"].get("totalsnow_cm", 0.0),
             )
             print(
-                f" {formatted_date:<5} | {temp:<8} | {pop:<11} | {maxuv:<12} | {gusts:<8} | {day_snow['status']:<18}"
+                f" {formatted_date:<5} | {temp:<8} | {pop:<11} | {maxuv:<12} | "
+                f"{gusts:<8} | {day_snow['status']:<18}"
             )
         print("-" * self.line_len)
+
+
+def print_file(path: Path) -> None:
+    """Универсальная попытка печати. Если не получается — просто сообщает путь."""
+    os_t = platform.system()
+    printed = False
+
+    if os_t == "Windows":
+        try:
+            subprocess.run(
+                f'notepad.exe /p "{path}"',
+                shell=True,
+                check=True,
+                timeout=30,
+            )
+            print("[+] Sent to printer (Windows)")
+            printed = True
+        except Exception as e:
+            print(f"[-] Windows print failed: {e}")
+
+    elif shutil.which("lp"):
+        try:
+            result = subprocess.run(
+                ["lp", str(path)],
+                capture_output=True,
+                text=True,
+                timeout=15,
+            )
+            if result.returncode == 0:
+                print("[+] Sent to printer (lp)")
+                if result.stdout.strip():
+                    print(result.stdout.strip())
+                printed = True
+            else:
+                try:
+                    stat = subprocess.run(
+                        ["lpstat", "-a"],
+                        capture_output=True,
+                        text=True,
+                        timeout=5,
+                    )
+                    printers = [
+                        line.split()[0]
+                        for line in stat.stdout.splitlines()
+                        if line.strip()
+                    ]
+                    if printers:
+                        printer = printers[0]
+                        print(f"[*] Trying printer: {printer}")
+                        result = subprocess.run(
+                            ["lp", "-d", printer, str(path)],
+                            capture_output=True,
+                            text=True,
+                            timeout=15,
+                        )
+                        if result.returncode == 0:
+                            print("[+] Sent to printer")
+                            printed = True
+                        else:
+                            print(f"[-] lp failed: {result.stderr.strip()}")
+                    else:
+                        print("[-] No printers found on this system")
+                except Exception:
+                    print("[-] Could not get printer list")
+        except Exception as e:
+            print(f"[-] Print error: {e}")
+    else:
+        print("[-] No print tools available (normal inside Docker)")
+
+    if not printed:
+        print("[!] File saved. Open it manually and print:")
+        print(f"    {path}")
 
 
 class Main:
@@ -180,14 +261,18 @@ class Main:
         Config.validate()
         db_session = SessionLocal()
         srv = WeatherService()
+
         try:
             city = srv.get_city_by_ip()
         except Exception as e:
             logger.warning(f"Failed to resolve city by IP: {e}")
             city = "Moscow"
+
         logger.info(f"Location resolved: {city}")
         print(f"[+] Location context: {city}")
+
         data = srv.get_weather(city)
+
         if "error" in data:
             try:
                 info_err = WeatherRequest(
@@ -201,7 +286,9 @@ class Main:
             finally:
                 db_session.close()
             logger.warning(f"Weather fetch failed: {data['error']}")
-            return print(f"[-] {data['error']}")
+            print(f"[-] {data['error']}")
+            return
+
         try:
             info_suc = WeatherRequest(
                 city=city,
@@ -215,28 +302,39 @@ class Main:
             db_session.commit()
         finally:
             db_session.close()
-        print_req = (
-            input(" Need to print the forecast? (No; Yes): ").strip().lower() == "yes"
-        )
+
+        print_req = input(" Need to print the forecast? (No; Yes): ").strip().lower()
         print("-" * 70)
-        report = WeatherReport(data, for_printing=print_req)
-        if not print_req:
-            return report.display()
-        fn, os_t = "weather_report.txt", platform.system()
-        orig = sys.stdout
-        with open(fn, "w", encoding="utf-8-sig" if os_t == "Windows" else "utf-8") as f:
-            sys.stdout = f
+
+        want_print = print_req in ("yes", "y", "да", "д")
+
+        report = WeatherReport(data, for_printing=want_print)
+
+        if not want_print:
+            print("\n")
             report.display()
-        sys.stdout = orig
+            return
+
+        fn = Path(__file__).resolve().parent / "weather_report.txt"
+        logger.debug(f"[DEBUG] __file__ = {__file__}")
+        logger.debug(f"[DEBUG] Saving to: {fn}")
+
+        orig = sys.stdout
         try:
-            subprocess.run(
-                f'notepad.exe /p "{fn}"' if os_t == "Windows" else ["lp", fn],
-                shell=(os_t == "Windows"),
-                check=True,
-            )
-            print("[+] Document successfully printed!")
-        except Exception as e:
-            print(f"[-] Print spooler failed: {e}")
+            with open(fn, "w", encoding="utf-8") as f:
+                sys.stdout = f
+                report.display()
+        finally:
+            sys.stdout = orig
+
+        print(f"[+] Report saved to: {fn}")
+        print(f"[+] File size: {fn.stat().st_size} bytes")
+
+        print_file(fn)
+
+        lines = "-" * 28
+        print(f"\n{lines} Preview of saved report {lines}\n")
+        report.display()
 
 
 if __name__ == "__main__":
