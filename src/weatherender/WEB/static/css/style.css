@@ -1,3 +1,7 @@
+html {
+    min-height: 100%;
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     margin: 0;
@@ -11,11 +15,11 @@ body {
     background-size: cover;
 }
 
-/* Backgrounds */
-.sunny { background: linear-gradient(135deg, #4facfe, #00f2fe); }
-.rainy { background: linear-gradient(135deg, #203a43, #2c5364); }
-.cloudy { background: linear-gradient(135deg, #757f9a, #d7dde8); }
-.thunder { background: linear-gradient(135deg, #141e30, #243b55); }
+/* Backgrounds — applied to both html and body to fix overscroll white flash */
+html.sunny, .sunny { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+html.rainy, .rainy { background: linear-gradient(135deg, #203a43, #2c5364); }
+html.cloudy, .cloudy { background: linear-gradient(135deg, #757f9a, #d7dde8); }
+html.thunder, .thunder { background: linear-gradient(135deg, #141e30, #243b55); }
 
 /* Main container */
 .card {
@@ -29,7 +33,7 @@ body {
 }
 
 h1 {
-    margin-top: 0;
+    margin: 0;
     color: #1877f2;
     font-size: 28px;
 }
@@ -46,6 +50,22 @@ h3 {
     color: #65676b;
     font-size: 14px;
     margin-bottom: 20px;
+}
+
+.title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.unit-toggle {
+    padding: 11px 20px;
+    font-size: 15px;
+    border-radius: 10px;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .search-form {
@@ -280,6 +300,17 @@ td:nth-child(n+2), th:nth-child(n+2) { text-align: center; }
     h3 {
         font-size: 16px;
         margin-top: 0;
+    }
+
+    .title-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .unit-toggle {
+        order: -1;
+        margin-bottom: 20px;
+        width: 200%;
     }
 
     .search-form {
