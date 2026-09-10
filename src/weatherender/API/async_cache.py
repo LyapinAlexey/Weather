@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 from asyncio import AbstractEventLoop
-from typing import Any, Optional
+from typing import Any
 
 import redis.asyncio as redis
 from redis.exceptions import RedisError
@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 
 class AsyncCacheService:
     def __init__(self) -> None:
-        self.client: Optional[redis.Redis] = None
-        self._loop: Optional[AbstractEventLoop] = None
+        self.client: redis.Redis | None = None
+        self._loop: AbstractEventLoop | None = None
 
     def _get_client(self) -> redis.Redis:
         try:
@@ -31,12 +31,13 @@ class AsyncCacheService:
         if self.client is not None:
             try:
                 await self.client.aclose()  # type: ignore[attr-defined]
-            except Exception:
-                pass
+            except RedisError:
+                logger.warning("Error while closing cache client")
+
             self.client = None
             self._loop = None
 
-    async def get(self, key: str) -> Optional[Any]:
+    async def get(self, key: str) -> Any | None:
         try:
             client = self._get_client()
             value = await client.get(key)

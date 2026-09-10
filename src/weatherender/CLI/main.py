@@ -3,7 +3,7 @@ import platform
 import shutil
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from weatherender.config import Config
@@ -75,10 +75,12 @@ class WeatherReport:
         )
 
     def display(self) -> None:
-        print(
-            f" Date and time: {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}\n"
-            + "-" * self.line_len
+        local_hr = (
+            datetime.strptime(self.loc["localtime"], "%Y-%m-%d %H:%M")
+            .replace(tzinfo=timezone.UTC)
+            .strftime("%Y-%m-%d %H:00")
         )
+        print(f" Date and time: {local_hr}\n" + "-" * self.line_len)
         if self.for_printing:
             print(f" City: {self.loc['name']} ({self.loc['country']})")
         else:
@@ -130,8 +132,10 @@ class WeatherReport:
         )
         print("-" * self.line_len)
 
-        local_hr = datetime.strptime(self.loc["localtime"], "%Y-%m-%d %H:%M").strftime(
-            "%Y-%m-%d %H:00"
+        local_hr = (
+            datetime.strptime(self.loc["localtime"], "%Y-%m-%d %H:%M")
+            .replace(tzinfo=timezone.UTC)
+            .strftime("%Y-%m-%d %H:00")
         )
         hours = [
             h
@@ -155,7 +159,9 @@ class WeatherReport:
         print("-" * self.line_len)
 
         for day in self.data["forecast"]["forecastday"]:
-            date_obj = datetime.strptime(day["date"], "%Y-%m-%d")
+            date_obj = datetime.strptime(day["date"], "%Y-%m-%d").replace(
+                tzinfo=timezone.UTC
+            )
             formatted_date = date_obj.strftime("%d.%m")
             temp = f"{day['day']['avgtemp_c']:.1f}°C"
             pop = f"{day['day']['daily_chance_of_rain']}%"
@@ -199,7 +205,7 @@ def print_file(path: Path) -> None:
             )
             print("[+] Sent to printer (Windows)")
             printed = True
-        except Exception as e:
+        except subprocess.SubprocessError as e:
             print(f"[-] Windows print failed: {e}")
 
     elif shutil.which("lp"):
@@ -209,6 +215,7 @@ def print_file(path: Path) -> None:
                 capture_output=True,
                 text=True,
                 timeout=15,
+                check=False,
             )
             if result.returncode == 0:
                 print("[+] Sent to printer (lp)")
@@ -222,6 +229,7 @@ def print_file(path: Path) -> None:
                         capture_output=True,
                         text=True,
                         timeout=5,
+                        check=False,
                     )
                     printers = [
                         line.split()[0]
@@ -236,6 +244,7 @@ def print_file(path: Path) -> None:
                             capture_output=True,
                             text=True,
                             timeout=15,
+                            check=False,
                         )
                         if result.returncode == 0:
                             print("[+] Sent to printer")
@@ -244,9 +253,9 @@ def print_file(path: Path) -> None:
                             print(f"[-] lp failed: {result.stderr.strip()}")
                     else:
                         print("[-] No printers found on this system")
-                except Exception:
+                except subprocess.SubprocessError:
                     print("[-] Could not get printer list")
-        except Exception as e:
+        except subprocess.SubprocessError as e:
             print(f"[-] Print error: {e}")
     else:
         print("[-] No print tools available (normal inside Docker)")
@@ -264,7 +273,7 @@ class Main:
 
         try:
             city = srv.get_city_by_ip()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"Failed to resolve city by IP: {e}")
             city = "Moscow"
 

@@ -30,9 +30,8 @@ def get_snow_state(
             or prev_day_max_temp > 2.0
             or "ice" in cond
             or "freezing" in cond
-        ):
-            if snow_24h_cm < 5:
-                return {"status": "Ice crust"}
+        ) and snow_24h_cm < 5:
+            return {"status": "Ice crust"}
 
     if temp_c > 0.5 or (temp_c >= -0.5 and humidity > 80):
         if cloud_cover < 30 and temp_c > 0:

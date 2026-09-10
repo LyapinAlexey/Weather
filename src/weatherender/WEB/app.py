@@ -345,7 +345,7 @@ def index() -> str:
         )
     except Exception as e:
         logger.exception("CRITICAL EXCEPTION in index route: %s", e)
-        return f"Internal Server Error: {str(e)}", 500  # type: ignore[return-value]
+        return f"Internal Server Error: {e!s}", 500  # type: ignore[return-value]
 
 
 @app.route("/health")

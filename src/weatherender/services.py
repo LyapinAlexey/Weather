@@ -27,7 +27,7 @@ class WeatherService:
                     elevation = float(elevations[0])
                     cache_service.set(cache_key, elevation, ttl=86400)
                     return elevation
-        except Exception as e:
+        except requests.RequestException as e:
             logger.warning(f"Open-meteo elevation API Error: {e}")
 
         return 0.0
@@ -57,7 +57,7 @@ class WeatherService:
                     lon = data.get("lon")
                     if lat is not None and lon is not None:
                         return f"{lat},{lon}"
-        except Exception as e:
+        except requests.RequestException as e:
             logger.error(f"IP-API Error: {e}")
         try:
             response = requests.get(f"https://ipinfo.io/{ip_address}/json", timeout=3)
@@ -71,7 +71,7 @@ class WeatherService:
                 if loc:
                     lat_str, lon_str = loc.split(",")
                     return float(lat_str), float(lon_str)
-        except Exception as e:
+        except requests.RequestException as e:
             logger.error(f"Ipinfo Error: {e}")
         return "London"  # Fallback
 

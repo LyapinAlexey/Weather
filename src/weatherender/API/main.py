@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     client = httpx.AsyncClient(
         limits=httpx.Limits(max_connections=100, max_keepalive_connections=20)
     )

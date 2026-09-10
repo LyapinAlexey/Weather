@@ -20,7 +20,7 @@ class Config:
         else temp_database_url
     )
     REDIS_URL = os.getenv("REDIS_URL", "redis://cache:6379")
-    REDIS_TTL = int(os.getenv("REDIS_TTL", 300))
+    REDIS_TTL = int(os.getenv("REDIS_TTL", "300"))
 
     @classmethod
     def validate(cls) -> None:

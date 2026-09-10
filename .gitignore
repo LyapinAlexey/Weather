@@ -9,6 +9,7 @@ env/
 dist/
 build/
 *.egg-info/
+coverage.xml
 
 # Python compilier
 __pycache__/

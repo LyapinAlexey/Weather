@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
 from dateutil.relativedelta import relativedelta
@@ -12,14 +12,12 @@ class TestDBClear:
         old_record = WeatherRequest(
             city="London",
             source="web",
-            created_at=datetime.now(timezone.utc).replace(tzinfo=None)
-            - relativedelta(months=5),
+            created_at=datetime.now(UTC).replace(tzinfo=None) - relativedelta(months=5),
         )
         new_record = WeatherRequest(
             city="New York",
             source="web",
-            created_at=datetime.now(timezone.utc).replace(tzinfo=None)
-            - relativedelta(days=5),
+            created_at=datetime.now(UTC).replace(tzinfo=None) - relativedelta(days=5),
         )
         db_session.add_all([old_record, new_record])
         db_session.commit()
@@ -32,14 +30,12 @@ class TestDBClear:
         new_record1 = WeatherRequest(
             city="Tokio",
             source="web",
-            created_at=datetime.now(timezone.utc).replace(tzinfo=None)
-            - relativedelta(days=5),
+            created_at=datetime.now(UTC).replace(tzinfo=None) - relativedelta(days=5),
         )
         new_record2 = WeatherRequest(
             city="Bangkok",
             source="web",
-            created_at=datetime.now(timezone.utc).replace(tzinfo=None)
-            - relativedelta(days=5),
+            created_at=datetime.now(UTC).replace(tzinfo=None) - relativedelta(days=5),
         )
         db_session.add_all([new_record1, new_record2])
         db_session.commit()
@@ -53,14 +49,12 @@ class TestDBClear:
         old_record1 = WeatherRequest(
             city="Toronto",
             source="web",
-            created_at=datetime.now(timezone.utc).replace(tzinfo=None)
-            - relativedelta(months=5),
+            created_at=datetime.now(UTC).replace(tzinfo=None) - relativedelta(months=5),
         )
         old_record2 = WeatherRequest(
             city="Ottava",
             source="web",
-            created_at=datetime.now(timezone.utc).replace(tzinfo=None)
-            - relativedelta(months=5),
+            created_at=datetime.now(UTC).replace(tzinfo=None) - relativedelta(months=5),
         )
         db_session.add_all([old_record1, old_record2])
         db_session.commit()
@@ -72,7 +66,7 @@ class TestDBClear:
         boundary_record = WeatherRequest(
             city="Paris",
             source="web",
-            created_at=datetime.now(timezone.utc).replace(tzinfo=None)
+            created_at=datetime.now(UTC).replace(tzinfo=None)
             - relativedelta(months=1)
             + relativedelta(seconds=5),
         )
@@ -84,10 +78,12 @@ class TestDBClear:
         assert remaining[0].city == "Paris"
 
     def test_clear_handles_exception(self, db_session):
-        with patch.object(db_session, "commit", side_effect=Exception("DB Error")):
-            with patch.object(db_session, "rollback") as mock_rollback:
-                weatherender.dbclear.clear(db_session)
-                mock_rollback.assert_called_once()
+        with (
+            patch.object(db_session, "commit", side_effect=Exception("DB Error")),
+            patch.object(db_session, "rollback") as mock_rollback,
+        ):
+            weatherender.dbclear.clear(db_session)
+            mock_rollback.assert_called_once()
 
     def test_main_execution(self):
         with patch("weatherender.dbclear.clear") as mock_clear:

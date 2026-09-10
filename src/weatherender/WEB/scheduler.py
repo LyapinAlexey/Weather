@@ -24,8 +24,8 @@ def run_dbclear_job() -> None:
     try:
         clear(session)
         logger.info("Weekly database clear job executed successfully.")
-    except Exception as e:
-        logger.exception(f"Error executing weekly database clear job: {e}")
+    except Exception:
+        logger.exception("Error executing weekly database clear job")
     finally:
         session.close()
 

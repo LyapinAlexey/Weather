@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Any, Optional
+from typing import Any
 
 import redis
 from redis.exceptions import RedisError
@@ -17,7 +17,7 @@ class CacheService:
             decode_responses=True,
         )
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         try:
             value = self.client.get(key)
             if value is not None:
@@ -27,7 +27,8 @@ class CacheService:
             return None
         return None
 
-    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
+    def set(self, key: str, value: Any, ttl: int | None = None) -> None:
+
         try:
             json_value = json.dumps(value)
             self.client.set(
