@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from weatherender.CLI.main import Main, WeatherReport
+from weatherender.CLI.main import Main, WeatherReport, print_file
 
 
 class TestCLI:
@@ -134,3 +134,72 @@ class TestCLI:
 
         captured = capsys.readouterr()
         assert "[-] {'message': 'City not found'}" in captured.out
+
+    @patch("weatherender.CLI.main.platform.system", return_value="Windows")
+    @patch("weatherender.CLI.main.subprocess.run")
+    def test_print_file_windows_success(self, mock_run, mock_system, capsys, tmp_path):
+        path = tmp_path / "weather_report.txt"
+        path.write_text("report")
+        mock_run.return_value = MagicMock(returncode=0)
+
+        print_file(path)
+
+        assert "[+] Sent to printer (Windows)" in capsys.readouterr().out
+
+    @patch("weatherender.CLI.main.shutil.which", return_value="/usr/bin/lp")
+    @patch("weatherender.CLI.main.platform.system", return_value="Linux")
+    @patch("weatherender.CLI.main.subprocess.run")
+    def test_print_file_lp_falls_back_to_printer(
+        self, mock_run, mock_system, mock_which, capsys, tmp_path
+    ):
+        path = tmp_path / "weather_report.txt"
+        path.write_text("report")
+        mock_run.side_effect = [
+            MagicMock(returncode=1, stderr="bad printer", stdout=""),
+            MagicMock(returncode=0, stdout="MyPrinter"),
+            MagicMock(returncode=0, stdout="sent"),
+        ]
+
+        print_file(path)
+
+        output = capsys.readouterr().out
+        assert "Trying printer: MyPrinter" in output
+        assert "[+] Sent to printer" in output
+
+    @patch("weatherender.CLI.main.shutil.which", return_value="/usr/bin/lp")
+    @patch("weatherender.CLI.main.platform.system", return_value="Linux")
+    @patch("weatherender.CLI.main.subprocess.run")
+    def test_print_file_no_printers_found(
+        self, mock_run, mock_system, mock_which, capsys, tmp_path
+    ):
+        path = tmp_path / "weather_report.txt"
+        path.write_text("report")
+        mock_run.side_effect = [
+            MagicMock(returncode=1, stdout="", stderr="failed"),
+            MagicMock(returncode=0, stdout=""),
+        ]
+
+        print_file(path)
+
+        assert "[-] No printers found on this system" in capsys.readouterr().out
+
+    def test_weather_report_color_metrics_handles_missing_forecast_data(self):
+        data = {
+            "location": {
+                "localtime": "2026-07-16 12:00",
+                "name": "Berlin",
+                "country": "Germany",
+            },
+            "current": {
+                "temp_c": -5,
+                "uv": 8,
+                "pressure_mb": 800,
+                "wind_kph": 70,
+                "condition": {"text": "Snow"},
+            },
+            "forecast": {"forecastday": []},
+        }
+        report = WeatherReport(data, for_printing=False)
+        metrics = report.get_color_metrics()
+        assert len(metrics) == 5
+        assert all(isinstance(value, str) for value in metrics)

@@ -38,6 +38,123 @@ class TestRoutes:
     @patch("weatherender.WEB.app.Config")
     @patch("weatherender.WEB.app.WeatherService.get_weather")
     @patch("weatherender.WEB.app.WeatherService.get_city_by_ip")
+    def test_index_head_request_returns_empty_response(
+        self,
+        mock_get_city,
+        mock_get_weather,
+        mock_config,
+        mock_session_local,
+        client,
+    ):
+        mock_config.WEATHER_API_KEY = "fake-key"
+        mock_session_local.return_value = MagicMock()
+        response = client.head("/")
+        assert response.status_code == 200
+        assert response.data == b""
+        mock_get_city.assert_not_called()
+        mock_get_weather.assert_not_called()
+
+    @patch("weatherender.WEB.app.SessionLocal")
+    @patch("weatherender.WEB.app.Config")
+    @patch("weatherender.WEB.app.WeatherService.get_weather")
+    @patch("weatherender.WEB.app.WeatherService.get_city_by_ip")
+    def test_index_robot_datacenter_falls_back_to_london(
+        self,
+        mock_get_city,
+        mock_get_weather,
+        mock_config,
+        mock_session_local,
+        client,
+        fake_weather_response,
+    ):
+        mock_config.WEATHER_API_KEY = "fake-key"
+        mock_session_local.return_value = MagicMock()
+        mock_get_city.return_value = "Robot-Datacenter"
+        mock_get_weather.return_value = fake_weather_response
+        response = client.get("/", headers={"User-Agent": "Mozilla/5.0"})
+        assert response.status_code == 200
+        mock_get_weather.assert_called_with("London", api_key="fake-key")
+        assert b"Berlin" in response.data
+
+    @patch("weatherender.WEB.app.SessionLocal")
+    @patch("weatherender.WEB.app.Config")
+    @patch("weatherender.WEB.app.WeatherService.get_elevation")
+    @patch("weatherender.WEB.app.WeatherService.get_weather")
+    @patch("weatherender.WEB.app.WeatherService.get_city_by_ip")
+    def test_index_applies_high_elevation_correction(
+        self,
+        mock_get_city,
+        mock_get_weather,
+        mock_get_elevation,
+        mock_config,
+        mock_session_local,
+        client,
+        fake_weather_response,
+    ):
+        mock_config.WEATHER_API_KEY = "fake-key"
+        mock_session_local.return_value = MagicMock()
+        mock_get_city.return_value = "Berlin"
+        weather = {
+            **fake_weather_response,
+            "location": {
+                **fake_weather_response["location"],
+                "lat": 52.52,
+                "lon": 13.4,
+            },
+            "current": {**fake_weather_response["current"], "temp_c": 10.0},
+        }
+        mock_get_weather.return_value = weather
+        mock_get_elevation.return_value = 500.0
+        response = client.get("/", headers={"User-Agent": "Mozilla/5.0"})
+        assert response.status_code == 200
+        assert b"Berlin" in response.data
+        mock_get_elevation.assert_called_once_with(52.52, 13.4)
+
+    def test_api_weather_requires_user_agent(self, client):
+        response = client.get("/api/weather?city=Berlin", headers={"User-Agent": ""})
+        assert response.status_code == 400
+        assert b"User-Agent header required" in response.data
+
+    @patch("weatherender.WEB.app.SessionLocal")
+    @patch("weatherender.WEB.app.Config")
+    @patch("weatherender.WEB.app.WeatherService.get_weather")
+    @patch("weatherender.WEB.app.WeatherService.get_city_by_ip")
+    def test_index_ignores_monitor_user_agent(
+        self,
+        mock_get_city,
+        mock_get_weather,
+        mock_config,
+        mock_session_local,
+        client,
+    ):
+        mock_config.WEATHER_API_KEY = "fake-key"
+        mock_session_local.return_value = MagicMock()
+        response = client.get("/", headers={"User-Agent": "UptimeRobot/2.1"})
+        assert response.status_code == 200
+        mock_get_city.assert_not_called()
+        mock_get_weather.assert_not_called()
+
+    @patch("weatherender.WEB.app.SessionLocal")
+    @patch("weatherender.WEB.app.Config")
+    @patch("weatherender.WEB.app.WeatherService.get_weather")
+    def test_index_exception_returns_500(
+        self,
+        mock_get_weather,
+        mock_config,
+        mock_session_local,
+        client,
+    ):
+        mock_config.WEATHER_API_KEY = "fake-key"
+        mock_session_local.return_value = MagicMock()
+        mock_get_weather.side_effect = RuntimeError("boom")
+        response = client.get("/", headers={"User-Agent": "Mozilla/5.0"})
+        assert response.status_code == 500
+        assert b"Internal Server Error" in response.data
+
+    @patch("weatherender.WEB.app.SessionLocal")
+    @patch("weatherender.WEB.app.Config")
+    @patch("weatherender.WEB.app.WeatherService.get_weather")
+    @patch("weatherender.WEB.app.WeatherService.get_city_by_ip")
     def test_index_post_valid_city_from_form(
         self,
         mock_get_city,
