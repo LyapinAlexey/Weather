@@ -34,7 +34,8 @@ logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
+    """Asynchronously manage FastAPI startup and shutdown, pre-allocating the HTTP client and closing cache connections."""
     client = httpx.AsyncClient(
         limits=httpx.Limits(max_connections=100, max_keepalive_connections=20)
     )
@@ -69,6 +70,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 async def get_weather_v2(
     request: Request, params: Annotated[WeatherQueryParams, Query()]
 ) -> WeatherResponseV2:
+    """Asynchronously handle the /api/v2/weather endpoint, fetching details, logging stats, and computing snow conditions."""
     city = params.city
     client = request.app.state.http_client
     weather_data = await AsyncWeatherService.get_weather_async(client=client, city=city)
@@ -157,6 +159,7 @@ async def get_weather_v2(
 
 @app.get("/api/v2/health")
 async def health_check() -> dict[str, str]:
+    """Asynchronously check database connectivity to report service health."""
     async with AsyncSessionLocal() as session:
         try:
             await session.execute(text("SELECT 1"))

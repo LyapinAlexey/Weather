@@ -18,18 +18,18 @@ from weatherender.snow import get_snow_state
 from weatherender.WEB import app as web
 
 __all__ = [
-    "api",
-    "cli",
-    "web",
-    "Config",
     "Base",
-    "WeatherRequest",
-    "WeatherService",
-    "get_snow_state",
     "CacheService",
     "CityRequestSchema",
-    "setup_logging",
-    "clear",
-    "__version__",
+    "Config",
+    "WeatherRequest",
+    "WeatherService",
     "__author__",
+    "__version__",
+    "api",
+    "clear",
+    "cli",
+    "get_snow_state",
+    "setup_logging",
+    "web",
 ]

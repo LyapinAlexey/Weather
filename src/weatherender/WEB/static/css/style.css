@@ -308,9 +308,7 @@ td:nth-child(n+2), th:nth-child(n+2) { text-align: center; }
     }
 
     .unit-toggle {
-        order: -1;
-        margin-bottom: 20px;
-        width: 200%;
+        width: 100%;
     }
 
     .search-form {

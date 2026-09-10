@@ -20,10 +20,15 @@ class Config:
         else temp_database_url
     )
     REDIS_URL = os.getenv("REDIS_URL", "redis://cache:6379")
-    REDIS_TTL = int(os.getenv("REDIS_TTL", 300))
+    REDIS_TTL = int(os.getenv("REDIS_TTL", "300"))
 
     @classmethod
     def validate(cls) -> None:
+        """Validate critical configuration settings at startup.
+
+        Raises:
+            RuntimeError: If SECRET_KEY is missing or LOG_LEVEL is invalid.
+        """
         if not cls.SECRET_KEY:
             raise RuntimeError(
                 "SECRET_KEY is not set. Add it to your .env file (see .env.example)."

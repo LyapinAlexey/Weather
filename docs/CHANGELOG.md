@@ -4,6 +4,15 @@ All notable changes to **Weatherender** (formerly *Weather*), organized by date 
 
 > Note: the repository's earliest history (24–30 June) contains a run of commits literally named `v1.0.0` through `v4.2.4` — an early, pre-conventional-commits naming habit rather than meaningful version releases. They're omitted below in favor of the descriptive commit messages from the same period, once a proper (`feat:`/`fix:`/`docs:`) commit style was adopted.
 
+## 2026-09-10 — Code linting, test suite resilience & UX styling
+
+- Integrated `Ruff` as the primary project-wide formatter and linter, automating strict code formatting on save.
+- Refactored `datetime` handling across CLI and API services to adopt modern Python 3.13 standards, replacing deprecated `Optional` typings with `X | None` union operators and upgrading timezone handling to native `datetime.UTC`.
+- Fixed test configuration and suite errors in `test_cli.py`, restoring full stability to all 119 tests with 100% execution pass rate.
+- Restored missing `logger` instance in `logging_config.py` initialization to prevent runtime `ImportError` on test setups.
+- Resolved type validation errors for environment configuration defaults, strictly enforcing `str` schemas inside `os.getenv` for Redis TTL parameters.
+- Realigned `index.html` structure and layout for mobile responsiveness, placing the main action button correctly underneath the "weatherender forecast" header element.
+
 ## 2026-09-07 - CLI report saving & print handling
 
 - Fixed CLI weather report saving: when user answers "yes" to print, the report is now correctly written to `src/weatherender/CLI/weather_report.txt`.

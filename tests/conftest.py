@@ -1,14 +1,17 @@
 import os
-from typing import Any, Generator
+from collections.abc import Generator
+from typing import Any
 
 import httpx
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport
+from redis.exceptions import RedisError
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from weatherender.API import app as api_app
+from weatherender.logging_config import logger
 from weatherender.models import Base
 from weatherender.WEB import app as flask_app
 
@@ -18,7 +21,7 @@ if TEST_DATABASE_URL is None:
 
 
 @pytest.fixture
-def db_session() -> Generator[Session, None, None]:
+def db_session() -> Generator[Session]:
     assert TEST_DATABASE_URL is not None
     engine = create_engine(TEST_DATABASE_URL)
     Base.metadata.create_all(bind=engine)
@@ -34,7 +37,7 @@ def db_session() -> Generator[Session, None, None]:
 
 
 @pytest.fixture
-def client() -> Generator[Any, None, None]:
+def client() -> Generator[Any]:
     flask_app.config["TESTING"] = True
     with flask_app.test_client() as client:
         yield client
@@ -99,15 +102,15 @@ async def reset_cache_client():
     if cache_service.client is not None:
         try:
             await cache_service.client.aclose()
-        except Exception:
-            pass
+        except RedisError:
+            logger.warning("Error while closing cache client")
         cache_service.client = None
     yield
     if cache_service.client is not None:
         try:
             await cache_service.client.aclose()
-        except Exception:
-            pass
+        except RedisError:
+            logger.warning("Error while closing cache client")
         cache_service.client = None
 
 

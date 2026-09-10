@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 from asyncio import AbstractEventLoop
-from typing import Any, Optional
+from typing import Any
 
 import redis.asyncio as redis
 from redis.exceptions import RedisError
@@ -14,10 +14,12 @@ logger = logging.getLogger(__name__)
 
 class AsyncCacheService:
     def __init__(self) -> None:
-        self.client: Optional[redis.Redis] = None
-        self._loop: Optional[AbstractEventLoop] = None
+        """Initialize AsyncCacheService, keeping the connection client and loop uninitialized until first access."""
+        self.client: redis.Redis | None = None
+        self._loop: AbstractEventLoop | None = None
 
     def _get_client(self) -> redis.Redis:
+        """Retrieve or create the asynchronous Redis client instance bound to the currently running asyncio event loop."""
         try:
             current_loop = asyncio.get_running_loop()
         except RuntimeError:
@@ -28,15 +30,18 @@ class AsyncCacheService:
         return self.client
 
     async def close(self) -> None:
+        """Asynchronously close the active Redis client connection if it is currently open."""
         if self.client is not None:
             try:
                 await self.client.aclose()  # type: ignore[attr-defined]
-            except Exception:
-                pass
+            except RedisError:
+                logger.warning("Error while closing cache client")
+
             self.client = None
             self._loop = None
 
-    async def get(self, key: str) -> Optional[Any]:
+    async def get(self, key: str) -> Any | None:
+        """Asynchronously retrieve and JSON-decode the cached value associated with the specified key."""
         try:
             client = self._get_client()
             value = await client.get(key)
@@ -47,6 +52,7 @@ class AsyncCacheService:
         return None
 
     async def set(self, key: str, value: Any) -> None:
+        """Asynchronously serialize the value to JSON and store it in cache with the default TTL."""
         try:
             client = self._get_client()
             json_value = json.dumps(value, default=str)

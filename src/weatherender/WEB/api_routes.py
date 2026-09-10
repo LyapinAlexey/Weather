@@ -162,9 +162,11 @@ def get_weather():
 @api_bp.route("/apispec.json")
 @limiter.limit("25 per minute")
 def get_apispec():
+    """Serialize and return the APISpec OpenAPI documentation schema as JSON."""
     return spec.to_dict()
 
 
 @api_bp.route("/ping", methods=["GET", "HEAD"])
 def ping() -> tuple[dict[str, str], int]:
+    """Perform a simple API health check, returning status 'ok' and 200 OK."""
     return {"status": "ok"}, 200
