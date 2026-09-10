@@ -12,6 +12,10 @@ logger = logging.getLogger(__name__)
 
 
 def clear(session: Session) -> None:
+    """Purge weather requests from the database that are older than one month.
+
+    Accepts an active SQLAlchemy Session, executes deletion, commits transaction, and rolls back on exception.
+    """
     # datetime.now(timezone.utc) + replace(tzinfo=None) instead of deprecated utcnow();
     # stays naive to match models.py created_at (which is also naive) — avoiding schema migration
     cutoff_date = datetime.now(UTC).replace(tzinfo=None) - relativedelta(months=1)

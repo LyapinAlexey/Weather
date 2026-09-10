@@ -24,6 +24,7 @@ class WeatherQueryParams(BaseModel):
     @field_validator("city")
     @classmethod
     def city_not_blank(cls, city: str) -> str:
+        """Validate that the query parameter 'city' is not blank, empty, or whitespace-only."""
         stripped = city.strip()
         if not stripped:
             raise ValueError("city must not be blank or whitespace-only")

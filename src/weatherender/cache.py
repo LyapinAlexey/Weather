@@ -12,12 +12,14 @@ logger = logging.getLogger(__name__)
 
 class CacheService:
     def __init__(self) -> None:
+        """Initialize the CacheService with a Redis client constructed from Config.REDIS_URL."""
         self.client: Any = redis.from_url(
             Config.REDIS_URL,
             decode_responses=True,
         )
 
     def get(self, key: str) -> Any | None:
+        """Retrieve and JSON-decode the cached value associated with the specified key."""
         try:
             value = self.client.get(key)
             if value is not None:
@@ -28,7 +30,7 @@ class CacheService:
         return None
 
     def set(self, key: str, value: Any, ttl: int | None = None) -> None:
-
+        """JSON-serialize and save the value in the cache with the given key and optional TTL."""
         try:
             json_value = json.dumps(value)
             self.client.set(

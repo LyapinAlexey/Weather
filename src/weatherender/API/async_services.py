@@ -14,6 +14,10 @@ class AsyncWeatherService:
     async def get_weather_async(
         client: httpx.AsyncClient, city: str, api_key: str | None = None
     ) -> dict:
+        """Asynchronously fetch 3-day forecast and current weather details for a city or coordinates.
+
+        Leverages an async Redis client for response caching and an async HTTP client for requests.
+        """
         if isinstance(city, tuple):
             city = f"{city[0]},{city[1]}"
         else:

@@ -24,6 +24,11 @@ class Config:
 
     @classmethod
     def validate(cls) -> None:
+        """Validate critical configuration settings at startup.
+
+        Raises:
+            RuntimeError: If SECRET_KEY is missing or LOG_LEVEL is invalid.
+        """
         if not cls.SECRET_KEY:
             raise RuntimeError(
                 "SECRET_KEY is not set. Add it to your .env file (see .env.example)."

@@ -3,7 +3,7 @@ import platform
 import shutil
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from weatherender.config import Config
@@ -29,17 +29,20 @@ RESET, BOLD, BLUE, CYAN, GREEN, YELLOW, RED, ORANGE = (
 
 class WeatherReport:
     def __init__(self, data: dict, for_printing: bool = False) -> None:
+        """Initialize the WeatherReport wrapper with weather response data and terminal/printing preferences."""
         self.data = data
         self.for_printing = for_printing
         self.loc, self.curr = data["location"], data["current"]
         self.line_len = 81 if for_printing else 70
 
     def _fmt(self, val: int | str, color: str) -> str:
+        """Format the given string or numeric value with ANSI colors if for console display, else as raw text."""
         if self.for_printing:
             return str(val)
         return f"{color}{val}{RESET}"
 
     def get_color_metrics(self) -> tuple[str, str, str, str, str]:
+        """Categorize and color-code temperature, UV, pressure, wind, and precip chance for terminal display."""
         t = self.curr.get("temp_c", 0)
         uv = round(self.curr.get("uv", 0))
         p = round(self.curr.get("pressure_mb", 1013) * 0.750062)
@@ -75,9 +78,10 @@ class WeatherReport:
         )
 
     def display(self) -> None:
+        """Print the complete weather report in a structured, user-friendly console layout."""
         local_hr = (
             datetime.strptime(self.loc["localtime"], "%Y-%m-%d %H:%M")
-            .replace(tzinfo=timezone.UTC)
+            .replace(tzinfo=UTC)
             .strftime("%Y-%m-%d %H:00")
         )
         print(f" Date and time: {local_hr}\n" + "-" * self.line_len)
@@ -134,7 +138,7 @@ class WeatherReport:
 
         local_hr = (
             datetime.strptime(self.loc["localtime"], "%Y-%m-%d %H:%M")
-            .replace(tzinfo=timezone.UTC)
+            .replace(tzinfo=UTC)
             .strftime("%Y-%m-%d %H:00")
         )
         hours = [
@@ -159,9 +163,7 @@ class WeatherReport:
         print("-" * self.line_len)
 
         for day in self.data["forecast"]["forecastday"]:
-            date_obj = datetime.strptime(day["date"], "%Y-%m-%d").replace(
-                tzinfo=timezone.UTC
-            )
+            date_obj = datetime.strptime(day["date"], "%Y-%m-%d").replace(tzinfo=UTC)
             formatted_date = date_obj.strftime("%d.%m")
             temp = f"{day['day']['avgtemp_c']:.1f}°C"
             pop = f"{day['day']['daily_chance_of_rain']}%"
@@ -191,7 +193,7 @@ class WeatherReport:
 
 
 def print_file(path: Path) -> None:
-    """Универсальная попытка печати. Если не получается — просто сообщает путь."""
+    """Send the structured report text file to a physical or local system printer, if available."""
     os_t = platform.system()
     printed = False
 
@@ -267,6 +269,7 @@ def print_file(path: Path) -> None:
 
 class Main:
     def run(self) -> None:
+        """Execute the CLI application workflow: resolve location, fetch weather, display, and handle print request."""
         Config.validate()
         db_session = SessionLocal()
         srv = WeatherService()
@@ -351,4 +354,5 @@ if __name__ == "__main__":
 
 
 def main() -> None:
+    """CLI application entrypoint wrapper that instantiates and runs the Main application logic."""
     Main().run()

@@ -5,6 +5,7 @@ import os
 
 class JsonFormatter(logging.Formatter):
     def format(self, record):
+        """Format the log record as a JSON-serialized string containing timestamp, level, logger name, and message."""
         log_data = {
             "timestamp": self.formatTime(record, "%Y-%m-%dT%H:%M:%S"),
             "level": record.levelname,
@@ -24,3 +25,6 @@ def setup_logging() -> None:
     root_logger.setLevel(log_level)
     root_logger.handlers = [handler]
     logging.getLogger("urllib3").setLevel(logging.WARNING)
+
+
+logger = logging.getLogger("weatherender")

@@ -38,6 +38,7 @@ app = Flask(__name__)
 # before Talisman to ensure our CSP override is applied last.
 @app.after_request
 def add_security_headers(response) -> Response:
+    """Inject custom security headers, specifically a relaxed CSP for the Swagger UI endpoint."""
     if request.path.startswith(SWAGGER_URL):
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; script-src 'self' 'unsafe-inline'"
@@ -63,6 +64,7 @@ app.secret_key = Config.SECRET_KEY
 
 @app.teardown_appcontext
 def shutdown_session(exception: BaseException | None = None) -> None:
+    """Tear down the database session context, closing any active SQLAlchemy session."""
     db_session = g.pop("db_session", None)
     if db_session is not None:
         db_session.close()
@@ -70,6 +72,7 @@ def shutdown_session(exception: BaseException | None = None) -> None:
 
 @app.before_request
 def check_user_agent():
+    """Enforce that incoming requests (except health check endpoints) include a User-Agent header."""
     if request.path == "/ping" or request.path == "/api/ping":
         return
     if not request.headers.get("User-Agent"):
@@ -81,6 +84,7 @@ def check_user_agent():
     "25 per minute"
 )  # Limit to 25 requests per minute per IP x 4 workers = 100 requests per minute
 def index() -> str:
+    """Serve the main weather dashboard UI, handling both standard rendering and post search requests."""
     try:
         if request.method == "HEAD":
             return "", 200  # type: ignore[return-value]
@@ -350,6 +354,7 @@ def index() -> str:
 
 @app.route("/health")
 def health_check() -> tuple[dict[str, str], int]:
+    """Verify that the web application and its database connection are healthy."""
     session = SessionLocal()
     try:
         session.execute(text("SELECT 1"))

@@ -13,6 +13,10 @@ cache_service = CacheService()
 class WeatherService:
     @staticmethod
     def get_elevation(lat: float, lon: float) -> float:
+        """Fetch the elevation of a given latitude and longitude from the Open-Meteo API.
+
+        Uses caching to store and retrieve previously fetched elevation data to minimize external API calls.
+        """
         cache_key = f"elevation:{lat}:{lon}"
         cached_val = cache_service.get(cache_key)
         if cached_val is not None:
@@ -34,6 +38,10 @@ class WeatherService:
 
     @staticmethod
     def get_city_by_ip(ip_address: str | None = None) -> str | tuple[float, float]:
+        """Resolve a city name or geographical coordinates (latitude, longitude) based on an IP address.
+
+        Queries ip-api.com and/or ipinfo.io, with a fallback to "London" for local/failed queries or datacenter bots.
+        """
         if not ip_address or ip_address in ("127.0.0.1", "localhost", None):
             return "London"
         if "," in ip_address:
@@ -79,6 +87,10 @@ class WeatherService:
     def get_weather(
         city: str | tuple[float, float], api_key: str | None = None
     ) -> dict[str, Any]:
+        """Fetch 3-day weather forecast and current weather conditions for a city or coordinate.
+
+        Utilizes Redis cache to store responses and queries WeatherAPI with the given API key.
+        """
         if isinstance(city, tuple):
             city = f"{city[0]},{city[1]}"
         else:

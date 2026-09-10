@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def try_acquire_leadership(lock_path: str) -> bool:
+    """Attempt to acquire a file-based lock to act as the primary scheduler leader."""
     try:
         fd = os.open(lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
         os.close(fd)
@@ -20,6 +21,7 @@ def try_acquire_leadership(lock_path: str) -> bool:
 
 
 def run_dbclear_job() -> None:
+    """Job function that creates a database session to clear old weather requests."""
     session = SessionLocal()
     try:
         clear(session)
@@ -31,6 +33,7 @@ def run_dbclear_job() -> None:
 
 
 def init_scheduler() -> None:
+    """Initialize and start the background job scheduler to run weekly database cleanup tasks."""
     if not try_acquire_leadership(LOCK_PATH):
         logger.info("Skipping scheduler initialization: another worker is the leader.")
         return
