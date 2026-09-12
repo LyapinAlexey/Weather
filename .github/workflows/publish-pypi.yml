@@ -1,0 +1,100 @@
+name: Publish to PyPI
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  test:
+    name: Run test suite before publishing
+    runs-on: ubuntu-latest
+    env:
+      WEATHER_API_KEY: ${{ secrets.API_KEY }}
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+      POSTGRES_DB: test_db
+      DATABASE_URL: postgresql://test_user:test_password@weather_db:5432/test_db
+      POSTGRES_TEST_USER: test_user
+      POSTGRES_TEST_PASSWORD: test_password
+      POSTGRES_TEST_DB: test_weather_db
+      TEST_DATABASE_URL: postgresql://test_user:test_password@weather_test_db:5432/test_weather_db
+      API_PORT: 8001
+      FLASK_PORT: 5001
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create .env file
+        run: |
+          cat <<EOF > .env
+          WEATHER_API_KEY=${{ secrets.API_KEY }}
+          FLASK_PORT=5001
+          API_PORT=8001
+          DATABASE_URL=postgresql://test_user:test_password@weather_db:5432/test_db
+          TEST_DATABASE_URL=postgresql://test_user:test_password@weather_test_db:5432/test_weather_db
+          EOF
+
+      - name: Start docker compose
+        run: docker compose --env-file .env up -d
+
+      - name: Wait for test PostgreSQL
+        run: |
+          echo "[?] Waiting for PostgreSQL..."
+          until docker compose exec -T weather_test_db pg_isready -U test_user -d test_weather_db; do
+            echo "[+] Database is starting up, retrying in 2 seconds..."
+            sleep 2
+          done
+          echo "[+] PostgreSQL is ready for use!"
+
+      - name: Alembic for test db
+        run: docker compose run --rm -e DATABASE_URL="postgresql://test_user:test_password@weather_test_db:5432/test_weather_db" cli alembic upgrade head
+
+      - name: Run pytest
+        run: docker compose run --rm -v ${{ github.workspace }}:/app cli pytest tests/ --asyncio-mode=auto
+        env:
+          WEATHER_API_KEY: ${{ secrets.API_KEY }}
+          DATABASE_URL: postgresql://test_user:test_password@weather_test_db:5432/test_weather_db
+          TEST_DATABASE_URL: postgresql://test_user:test_password@weather_test_db:5432/test_weather_db
+
+      - name: Check Docker Logs
+        run: docker compose logs
+        if: always()
+
+  build-and-publish:
+    name: Build and publish package to PyPI
+    needs: test
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Verify tag matches pyproject.toml version
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          PYPROJECT_VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          if [ "$TAG_VERSION" != "$PYPROJECT_VERSION" ]; then
+            echo "[-] Tag ($TAG_VERSION) does not match pyproject.toml version ($PYPROJECT_VERSION)"
+            exit 1
+          fi
+          echo "[+] Tag matches pyproject.toml version: $PYPROJECT_VERSION"
+
+      - name: Install build tooling
+        run: python -m pip install --upgrade build
+
+      - name: Build sdist and wheel
+        run: python -m build
+
+      - name: Sanity-check built distribution
+        run: |
+          python -m pip install dist/*.whl
+          python -c "from weatherender.CLI.main import main; print('[+] Entry point import OK:', main)"
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
