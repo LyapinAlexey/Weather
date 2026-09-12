@@ -39,7 +39,12 @@ pip install weatherender
 weatherender
 ```
 
-Requires Python 3.13+ and a configured `.env` (at minimum `WEATHER_API_KEY`).
+Requires Python 3.13+ and a configured `.env`. At minimum you'll need:
+- `WEATHER_API_KEY` — free key from [weatherapi.com](https://www.weatherapi.com/)
+- `SECRET_KEY` — generate with `python -c "import secrets; print(secrets.token_hex(32))"`
+- `DATABASE_URL` — a reachable PostgreSQL instance; the CLI logs every request (success or failure) to it
+
+Simply importing the package (e.g. as a dependency, or via tooling) does **not** require any of these — they're only needed to actually run `weatherender`.
 
 ### Docker image (API)
 
