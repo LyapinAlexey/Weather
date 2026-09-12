@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "weatherender"
-version = "2.0.0"
+version = "2.0.1"
 description = "Production-grade weather intelligence for skiers"
 readme = "README.md"
 authors = [{ name = "Alexey Lyapin", email = "lehacomp16@gmail.com" }]
