@@ -69,7 +69,7 @@ For the full local stack (web + api + postgres + redis) use Docker Compose below
 - 🐬 Docker image on GHCR: [`ghcr.io/weatherender-foundation/weatherender-api`](https://github.com/Weatherender-foundation/Weatherender/pkgs/container/weatherender-api)
 - 🐍 Published on PyPI: [`pip install weatherender`](https://pypi.org/project/weatherender/)
 - 🔄 CI/CD via GitHub Actions (build, migrate, health check, image publish)
-- 🧪 142+ automated tests (pytest): unit, mocked service, Flask & FastAPIroute, and real PostgreSQL integration tests
+- 🧪 158+ automated tests (pytest): unit, mocked service, Flask & FastAPIroute, and real PostgreSQL integration tests
 - 🔌 JSON REST API (`/api/weather` and `/api/v2/weather`) with interactive Swagger/OpenAPI docs
 - ⚡️ Redis caching for WeatherAPI responses (TTL-based, graceful fallback on Redis unavailability)
 - 📊 Prometheus metrics endpoint (`/metrics`) for observability

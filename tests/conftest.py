@@ -34,6 +34,8 @@ def db_session() -> Generator[Session]:
     if transaction.is_active:
         transaction.rollback()
     connection.close()
+    Base.metadata.drop_all(bind=engine)
+    engine.dispose()
 
 
 @pytest.fixture
@@ -79,7 +81,27 @@ def fake_weather_response() -> dict:
                             "pressure_mb": 1013,
                         }
                     ],
-                }
+                },
+                {
+                    "date": "2026-07-17",
+                    "day": {
+                        "avgtemp_c": 22,
+                        "totalprecip_mm": 0,
+                        "uv": 5,
+                        "maxwind_kph": 10,
+                        "gust_kph": 15,
+                    },
+                    "hour": [
+                        {
+                            "time": "2026-07-17 12:00",
+                            "temp_c": 22,
+                            "chance_of_rain": 0,
+                            "chance_of_snow": 0,
+                            "uv": 5,
+                            "pressure_mb": 1013,
+                        }
+                    ],
+                },
             ]
         },
     }
