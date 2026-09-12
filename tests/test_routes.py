@@ -292,7 +292,7 @@ class TestRoutes:
         assert "status" in data["snow_state"]
         assert "snow_forecast" in data
         assert isinstance(data["snow_forecast"], list)
-        assert len(data["snow_forecast"]) == 1
+        assert len(data["snow_forecast"]) == 2
         assert data["snow_forecast"][0]["date"] == "2026-07-16"
         assert "status" in data["snow_forecast"][0]["snow_state"]
 
@@ -313,3 +313,106 @@ class TestRoutes:
         assert response.status_code == 200
         assert data["snow_state"]["status"] == "No snow data"
         assert data["snow_forecast"] == []
+
+    def test_swagger_security_headers(self, client):
+        response = client.get("/apidocs/")
+        assert "Content-Security-Policy" in response.headers
+
+    def test_get_apispec_endpoint(self, client):
+        response = client.get("/api/apispec.json")
+        assert response.status_code == 200
+        assert isinstance(response.get_json(), dict)
+
+    @patch("weatherender.WEB.api_routes.SessionLocal")
+    @patch("weatherender.WEB.api_routes.WeatherService.get_weather")
+    def test_api_weather_multi_day_forecast(
+        self, mock_get_weather, mock_session_local, client, fake_weather_response
+    ):
+        mock_session_local.return_value = MagicMock()
+        mock_get_weather.return_value = fake_weather_response
+        response = client.get("/api/weather?city=London")
+        assert response.status_code == 200
+        data = response.get_json()
+        assert len(data["snow_forecast"]) == 2
+
+    @patch("weatherender.WEB.app.SessionLocal")
+    @patch("weatherender.WEB.app.Config")
+    @patch("weatherender.WEB.app.WeatherService.get_weather")
+    @patch("weatherender.WEB.app.WeatherService.get_city_by_ip")
+    def test_index_multi_day_forecast(
+        self,
+        mock_get_city,
+        mock_get_weather,
+        mock_config,
+        mock_session_local,
+        client,
+        fake_weather_response,
+    ):
+        mock_config.WEATHER_API_KEY = "fake-key"
+        mock_session_local.return_value = MagicMock()
+        mock_get_city.return_value = "Berlin"
+        mock_get_weather.return_value = fake_weather_response
+        response = client.get("/")
+        assert response.status_code == 200
+
+    @patch("weatherender.WEB.app.SessionLocal")
+    @patch("weatherender.WEB.app.Config")
+    @patch("weatherender.WEB.app.WeatherService.get_weather")
+    def test_index_user_agent_bot_handling(
+        self,
+        mock_get_weather,
+        mock_config,
+        mock_session_local,
+        client,
+        fake_weather_response,
+    ):
+        mock_config.WEATHER_API_KEY = "fake-key"
+        mock_session_local.return_value = MagicMock()
+        mock_get_weather.return_value = fake_weather_response
+        response = client.get("/", headers={"User-Agent": "Uptimerobot/1.0"})
+        assert response.status_code == 200
+
+    @patch("weatherender.WEB.app.SessionLocal")
+    @patch("weatherender.WEB.app.Config")
+    @patch("weatherender.WEB.app.WeatherService.get_weather")
+    @patch("weatherender.WEB.app.WeatherService.get_city_by_ip")
+    def test_index_city_not_found_error_rendering(
+        self,
+        mock_get_city,
+        mock_get_weather,
+        mock_config,
+        mock_session_local,
+        client,
+    ):
+        mock_config.WEATHER_API_KEY = "fake-key"
+        mock_session_local.return_value = MagicMock()
+        mock_get_city.return_value = "UnknownCity"
+        mock_get_weather.return_value = {"error": {"message": "City not found"}}
+        response = client.get("/")
+        assert response.status_code == 200
+        assert b"City not found" in response.data
+
+    @patch("weatherender.WEB.app.SessionLocal")
+    @patch("weatherender.WEB.app.Config")
+    @patch(
+        "weatherender.WEB.app.WeatherService.get_elevation",
+        side_effect=Exception("Elevation failed"),
+    )
+    @patch("weatherender.WEB.app.WeatherService.get_weather")
+    @patch("weatherender.WEB.app.WeatherService.get_city_by_ip")
+    def test_index_elevation_exception_handled(
+        self,
+        mock_get_city,
+        mock_get_weather,
+        mock_elevation,
+        mock_config,
+        mock_session_local,
+        client,
+        fake_weather_response,
+    ):
+        mock_config.WEATHER_API_KEY = "fake-key"
+        mock_session_local.return_value = MagicMock()
+        mock_get_city.return_value = "Berlin"
+        mock_get_weather.return_value = fake_weather_response
+        response = client.get("/")
+        assert response.status_code == 200

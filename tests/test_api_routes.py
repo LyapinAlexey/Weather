@@ -39,7 +39,7 @@ class TestApiRoutes:
         assert "status" in data["snow_state"]
         assert "snow_forecast" in data
         assert isinstance(data["snow_forecast"], list)
-        assert len(data["snow_forecast"]) == 1
+        assert len(data["snow_forecast"]) == 2
         assert data["snow_forecast"][0]["date"] == "2026-07-16"
 
     @pytest.mark.asyncio
@@ -153,3 +153,30 @@ class TestApiRoutes:
         ]
         response = await api_client.get("/api/v2/weather?city=Berlin")
         assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    @patch("weatherender.API.main.AsyncSessionLocal")
+    @patch("weatherender.API.main.AsyncWeatherService.get_weather_async")
+    async def test_get_weather_v2_multi_day_forecast(
+        self, mock_get_weather, mock_session_local, api_client, fake_weather_response
+    ):
+        mock_session = AsyncMock()
+        mock_session.add = MagicMock()
+        mock_session_local.return_value.__aenter__.return_value = mock_session
+        mock_session_local.return_value.__aexit__.return_value = None
+        mock_get_weather.return_value = fake_weather_response
+        response = await api_client.get("/api/v2/weather?city=Berlin")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data["snow_forecast"]) == 2
+
+    @pytest.mark.asyncio
+    async def test_favicon_route(self, api_client):
+        from fastapi import Response
+
+        with patch(
+            "weatherender.API.main.FileResponse",
+            return_value=Response(content=b"", media_type="image/png"),
+        ):
+            response = await api_client.get("/favicon.ico")
+            assert response.status_code == 200

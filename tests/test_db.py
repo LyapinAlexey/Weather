@@ -1,6 +1,10 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
 from sqlalchemy.exc import IntegrityError
 
+import weatherender.API.async_db
+import weatherender.models
 from weatherender.models import WeatherRequest
 
 
@@ -67,3 +71,60 @@ class TestDB:
         db_session.commit()
         found = db_session.query(WeatherRequest).filter_by(city="Monza").first()
         assert found.temp_c == 30
+
+    def test_models_get_engine_and_session_local(self):
+        with (
+            patch("weatherender.models._engine", None),
+            patch("weatherender.models._session_factory", None),
+            patch("weatherender.models.create_engine") as mock_create_engine,
+            patch("weatherender.models.sessionmaker") as mock_sessionmaker,
+        ):
+            mock_engine = MagicMock()
+            mock_create_engine.return_value = mock_engine
+
+            engine = weatherender.models.get_engine()
+            assert engine == mock_engine
+            mock_create_engine.assert_called_once()
+
+            session = weatherender.models.SessionLocal()
+            mock_sessionmaker.assert_called_once_with(bind=mock_engine)
+            assert session == mock_sessionmaker.return_value.return_value
+
+    def test_async_db_get_engine_and_session_local(self):
+        orig_engine = weatherender.API.async_db._engine
+        orig_factory = weatherender.API.async_db._session_factory
+        try:
+            weatherender.API.async_db._engine = None
+            weatherender.API.async_db._session_factory = None
+            with (
+                patch.object(
+                    weatherender.API.async_db.Config,
+                    "DATABASE_URL",
+                    "postgresql://user:pass@localhost:5432/db",
+                ),
+                patch(
+                    "weatherender.API.async_db.create_async_engine"
+                ) as mock_create_async_engine,
+                patch(
+                    "weatherender.API.async_db.async_sessionmaker"
+                ) as mock_async_sessionmaker,
+            ):
+                mock_engine = MagicMock()
+                mock_create_async_engine.return_value = mock_engine
+
+                engine = weatherender.API.async_db.get_engine()
+                assert engine == mock_engine
+                mock_create_async_engine.assert_called_once_with(
+                    "postgresql+asyncpg://user:pass@localhost:5432/db",
+                    pool_size=10,
+                    max_overflow=20,
+                )
+
+                session = weatherender.API.async_db.AsyncSessionLocal()
+                mock_async_sessionmaker.assert_called_once_with(
+                    mock_engine, expire_on_commit=False
+                )
+                assert session == mock_async_sessionmaker.return_value.return_value
+        finally:
+            weatherender.API.async_db._engine = orig_engine
+            weatherender.API.async_db._session_factory = orig_factory

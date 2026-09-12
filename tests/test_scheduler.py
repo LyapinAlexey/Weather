@@ -32,6 +32,15 @@ class TestScheduler:
         mock_session_local.assert_called_once()
         mock_clear.assert_called_once_with(fake_session)
 
+    @patch("weatherender.WEB.scheduler.clear", side_effect=Exception("Job error"))
+    @patch("weatherender.WEB.scheduler.SessionLocal")
+    def test_run_dbclear_job_exception_handled(self, mock_session_local, mock_clear):
+        fake_session = MagicMock()
+        mock_session_local.return_value = fake_session
+        run_dbclear_job()
+
+        fake_session.close.assert_called_once()
+
     @patch("weatherender.WEB.scheduler.BackgroundScheduler")
     @patch("weatherender.WEB.scheduler.try_acquire_leadership", return_value=False)
     def test_scheduler_not_started_when_not_leader(

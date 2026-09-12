@@ -321,3 +321,23 @@ class TestGetWeather(unittest.TestCase):
         result = WeatherService.get_weather("London", api_key="fake-key")
 
         assert "Weather service error. Status code: 503" == result["error"]["message"]
+
+    @patch("weatherender.services.cache_service.get", return_value=None)
+    @patch(
+        "weatherender.services.requests.get",
+        side_effect=requests.RequestException("Elevation error"),
+    )
+    def test_get_elevation_request_exception_returns_zero(
+        self, mock_get, mock_cache_get
+    ):
+        res = WeatherService.get_elevation(10.0, 20.0)
+        assert res == 0.0
+
+    @patch("weatherender.services.requests.get")
+    def test_get_city_by_ip_ipinfo_robot_datacenter(self, mock_get):
+        ipapi_resp = Mock(status_code=400)
+        ipinfo_resp = Mock(status_code=200)
+        ipinfo_resp.json.return_value = {"org": "Amazon.com, Inc. Datacenter"}
+        mock_get.side_effect = [ipapi_resp, ipinfo_resp]
+        city = WeatherService.get_city_by_ip("8.8.8.8")
+        assert city == "Robot-Datacenter"

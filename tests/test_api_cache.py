@@ -61,3 +61,29 @@ class TestAsyncCacheService:
         await cache.close()
 
         mock_client.aclose.assert_awaited_once()
+
+    @patch(
+        "weatherender.API.async_cache.asyncio.get_running_loop",
+        side_effect=RuntimeError,
+    )
+    @patch("weatherender.API.async_cache.redis.from_url")
+    async def test_get_client_no_running_loop(self, mock_redis_from_url, mock_get_loop):
+        cache = AsyncCacheService()
+        client = cache._get_client()
+        assert client is mock_redis_from_url.return_value
+        assert cache._loop is None
+        mock_redis_from_url.assert_called_once()
+
+    @patch("weatherender.API.async_cache.redis.from_url")
+    async def test_cache_close_redis_error(self, mock_redis_from_url):
+        mock_client = AsyncMock()
+        mock_client.aclose.side_effect = RedisError("Close error")
+        mock_redis_from_url.return_value = mock_client
+
+        cache = AsyncCacheService()
+        cache.client = mock_client
+        cache._loop = AsyncMock()
+        await cache.close()
+
+        assert cache.client is None
+        assert cache._loop is None

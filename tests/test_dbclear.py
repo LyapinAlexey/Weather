@@ -86,9 +86,13 @@ class TestDBClear:
             mock_rollback.assert_called_once()
 
     def test_main_execution(self):
-        with patch("weatherender.dbclear.clear") as mock_clear:
-            if hasattr(weatherender.dbclear, "main"):
-                weatherender.dbclear.main()
-                mock_clear.assert_called_once()
-            else:
-                weatherender.dbclear.clear(MagicMock())
+        with (
+            patch("weatherender.models.SessionLocal") as mock_session_local,
+            patch("sys.argv", ["dbclear"]),
+        ):
+            mock_session = MagicMock()
+            mock_session_local.return_value = mock_session
+            import runpy
+
+            runpy.run_module("weatherender.dbclear", run_name="__main__")
+            mock_session_local.assert_called_once()
